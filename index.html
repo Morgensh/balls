@@ -2,552 +2,726 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ball Battle</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>War for Territory</title>
     <style>
-        body {
+        * {
             margin: 0;
-            padding: 10px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        body {
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-
-        .container {
-            background: white;
-            border-radius: 20px;
-            padding: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-            text-align: center;
-            width: 100%;
-            max-width: 500px;
-            box-sizing: border-box;
-        }
-
-        .stats {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            font-size: 16px;
-            font-weight: bold;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .player {
-            padding: 8px 15px;
-            border-radius: 8px;
-            min-width: 100px;
-            box-sizing: border-box;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .player1 {
-            background: #ff6b6b;
-            color: white;
-        }
-
-        .player2 {
-            background: #4CAF50;
-            color: white;
-        }
-
-        canvas {
-            border: 3px solid #333;
-            border-radius: 10px;
-            display: block;
-            background: #f8f9fa;
-            margin: 15px auto;
-            max-width: 100%;
-            max-height: 100%;
-            touch-action: none;
-            image-rendering: optimizeQuality;
-        }
-
-        .message {
-            font-size: 18px;
-            font-weight: bold;
-            color: #667eea;
-            min-height: 25px;
-            margin: 10px 0;
-            word-wrap: break-word;
-        }
-
-        button {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            font-size: 14px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 5px;
-            touch-action: manipulation;
-        }
-
-        button:hover {
-            background: #764ba2;
-        }
-
-        #settingsBtn {
-            position: fixed;
-            top: 10px;
-            right: 10px;
-            z-index: 1001;
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            opacity: 0.3;
-            transition: opacity 0.2s;
-        }
-
-        #settingsBtn:hover {
-            opacity: 0.5;
-        }
-
-        #settingsModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            padding: 10px;
         }
-
-        #settingsContent {
-            background: white;
+        .container {
+            background: #0f1419;
+            border-radius: 15px;
             padding: 15px;
-            border-radius: 10px;
-            text-align: left;
-            max-width: 90%;
-            width: 350px;
-            box-sizing: border-box;
-        }
-
-        #settingsContent label {
-            display: block;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        #settingsContent input {
+            box-shadow: 0 0 60px rgba(255, 107, 107, 0.3), 0 0 60px rgba(78, 205, 196, 0.3);
+            border: 2px solid #1a2540;
             width: 100%;
-            padding: 5px;
-            margin-top: 3px;
-            box-sizing: border-box;
-            font-size: 14px;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
-
-        #settingsContent button {
-            margin-right: 8px;
+        h1 {
+            text-align: center;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.8), 0 0 10px rgba(78, 205, 196, 0.8);
+            font-size: clamp(20px, 5vw, 28px);
+            letter-spacing: 2px;
+            margin: 0;
         }
-
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            width: 100%;
+        }
+        .stat-box {
+            padding: 10px 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            border: 2px solid;
+            transition: all 0.3s ease;
+            font-size: clamp(12px, 3vw, 14px);
+            min-height: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .stat-box.team1 {
+            background: rgba(255, 107, 107, 0.15);
+            border-color: #ff6b6b;
+            color: #ff9999;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
+        }
+        .stat-box.team2 {
+            background: rgba(78, 205, 196, 0.15);
+            border-color: #4ecdc4;
+            color: #7dd8d3;
+            text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
+        }
+        .stat-box.neutral {
+            background: rgba(200, 200, 200, 0.1);
+            border-color: #666;
+            color: #aaa;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(40, 1fr);
+            gap: 2px;
+            padding: 12px;
+            background: #0a0d15;
+            border-radius: 8px;
+            border: 2px solid #1a2540;
+            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
+            position: relative;
+            aspect-ratio: 1;
+            width: 100%;
+        }
+        .flag-corner {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 10;
+        }
+        .flag-corner img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.8));
+        }
+        .flag-corner.top-left {
+            top: 10px;
+            left: 10px;
+        }
+        .flag-corner.top-right {
+            top: 10px;
+            right: 10px;
+        }
+        .flag-corner.bottom-left {
+            bottom: 10px;
+            left: 10px;
+        }
+        .flag-corner.bottom-right {
+            bottom: 10px;
+            right: 10px;
+        }
+        .territory {
+            aspect-ratio: 1;
+            border: 0.5px solid #333;
+            border-radius: 1px;
+            cursor: pointer;
+            transition: all 0.05s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: visible;
+            min-width: 0;
+            min-height: 0;
+        }
+        .territory img {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            object-fit: contain;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+        .territory.team1 {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
+            border-color: #ff4444;
+            box-shadow: inset 0 0 4px rgba(255, 0, 0, 0.6);
+        }
+        .territory.team2 {
+            background: linear-gradient(135deg, #4ecdc4 0%, #45b7aa 100%);
+            border-color: #3ba89f;
+            box-shadow: inset 0 0 4px rgba(0, 255, 200, 0.6);
+        }
+        .territory.neutral {
+            background: #1a2535;
+            border-color: #222;
+        }
+        @keyframes blood-splatter {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) scale(1) rotate(0deg);
+            }
+            30% {
+                opacity: 0.9;
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--tx), var(--ty)) scale(0.3) rotate(360deg);
+            }
+        }
+        @keyframes pulse-capture {
+            0% {
+                filter: brightness(1.8) drop-shadow(0 0 12px rgba(255, 255, 255, 0.9));
+                transform: scale(0.8);
+            }
+            50% {
+                filter: brightness(1.5) drop-shadow(0 0 20px rgba(255, 255, 255, 0.7));
+                transform: scale(1.1);
+            }
+            100% {
+                filter: brightness(1) drop-shadow(0 0 0px rgba(255, 255, 255, 0));
+                transform: scale(1);
+            }
+        }
+        .territory.captured {
+            animation: pulse-capture 0.6s ease-out;
+        }
+        .blood {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        .blood-drop {
+            position: absolute;
+            border-radius: 50%;
+            animation: blood-splatter 0.9s ease-out forwards;
+            filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
+        }
+        .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            width: 100%;
+        }
+        button {
+            padding: 12px 18px;
+            border: 2px solid;
+            border-radius: 8px;
+            font-size: clamp(12px, 3vw, 14px);
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            background: #16213e;
+            color: #4ecdc4;
+            border-color: #4ecdc4;
+            text-shadow: 0 0 5px rgba(78, 205, 196, 0.5);
+            white-space: nowrap;
+            flex: 1;
+            min-width: 100px;
+        }
+        button:hover {
+            background: #4ecdc4;
+            color: #0f1419;
+            box-shadow: 0 0 20px rgba(78, 205, 196, 0.6);
+            transform: scale(1.05);
+            text-shadow: none;
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal.show {
+            display: flex;
+        }
+        .modal-content {
+            background: #0f1419;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #4ecdc4;
+            box-shadow: 0 0 40px rgba(78, 205, 196, 0.4);
+            max-width: 500px;
+            width: 100%;
+        }
+        .modal-content h2 {
+            color: #4ecdc4;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: clamp(18px, 5vw, 24px);
+        }
+        .flag-preview {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .preview-box {
+            flex: 1;
+            text-align: center;
+        }
+        .preview-box p {
+            color: #aaa;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        .preview-box img {
+            width: 80px;
+            height: 80px;
+            border: 2px solid #4ecdc4;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #1a2535;
+            margin-bottom: 10px;
+        }
+        .preview-box input[type="file"] {
+            font-size: 12px;
+            color: #4ecdc4;
+            width: 100%;
+        }
+        .preview-box input[type="file"]::file-selector-button {
+            background: #16213e;
+            color: #4ecdc4;
+            border: 2px solid #4ecdc4;
+            border-radius: 6px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .preview-box input[type="file"]::file-selector-button:hover {
+            background: #4ecdc4;
+            color: #0f1419;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px;
+        }
         @media (max-width: 480px) {
-            body {
-                padding: 5px;
-            }
             .container {
-                padding: 10px;
+                padding: 12px;
+                gap: 12px;
             }
-            .stats {
-                font-size: 14px;
-                flex-direction: column;
-                align-items: center;
-            }
-            .player {
-                width: 100%;
-                text-align: center;
-                max-width: 100%;
-            }
-            canvas {
-                width: 100%;
-                height: auto;
+            .stat-box {
+                font-size: 11px;
+                padding: 8px;
+                min-height: 45px;
             }
             button {
-                padding: 8px 15px;
-                font-size: 12px;
+                padding: 10px 14px;
+                min-width: 80px;
             }
-            #settingsBtn {
-                top: 5px;
-                right: 5px;
-                width: 35px;
-                height: 35px;
-                opacity: 0.3;
-            }
-            #settingsBtn:hover {
-                opacity: 0.5;
-            }
-            #settingsContent {
-                width: 95%;
-                padding: 10px;
+            .modal-content {
+                padding: 20px;
             }
         }
     </style>
 </head>
 <body>
-    <button id="settingsBtn">⚙️</button>
     <div class="container">
+        <h1>⚔️ WAR FOR TERRITORY ⚔️</h1>
+        
         <div class="stats">
-            <div class="player player1">🔴 <span id="name1">Ball 1</span>: ❤️ <span id="hp1">2</span></div>
-            <div class="player player2">🟢 <span id="name2">Ball 2</span>: ❤️ <span id="hp2">2</span></div>
+            <div class="stat-box team1">
+                🔴 <span id="team1-count">0</span>
+            </div>
+            <div class="stat-box neutral">
+                ⚪ <span id="neutral-count">1600</span>
+            </div>
+            <div class="stat-box team2">
+                🔵 <span id="team2-count">0</span>
+            </div>
         </div>
-        <canvas id="gameCanvas"></canvas>
-        <div class="message" id="message"></div>
-        <button id="newGameBtn">New Game</button>
+
+        <div class="grid" id="grid"></div>
+
+        <div class="buttons">
+            <button onclick="resetGame()">🔄 RESET</button>
+            <button onclick="togglePause()">▶️ START</button>
+            <button onclick="speedUp()">⚡ SPEED</button>
+        </div>
     </div>
 
-    <div id="settingsModal">
-        <div id="settingsContent">
-            <label>Player 1 Name: <input id="nameInput1" value="Ball 1"></label>
-            <label>Player 2 Name: <input id="nameInput2" value="Ball 2"></label>
-            <label>Player 1 Image: <input type="file" id="fileInput1" accept="image/*"></label>
-            <label>Player 2 Image: <input type="file" id="fileInput2" accept="image/*"></label>
-            <label>Ball Size: <input type="range" id="sizeSlider" min="10" max="50" value="20"></label>
-            <label>Starting Health: <input type="number" id="hpInput" min="1" max="10" value="2"></label>
-            <button onclick="saveSettings()">Save</button>
-            <button onclick="closeSettings()">Cancel</button>
+    <div id="flagModal" class="modal">
+        <div class="modal-content">
+            <h2>🚩 Select Flags for Armies</h2>
+            
+            <div class="flag-preview">
+                <div class="preview-box">
+                    <p>🔴 Red Army</p>
+                    <img id="team1Preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23ff6b6b' width='100' height='100'/%3E%3C/svg%3E" alt="Team 1">
+                    <input type="file" id="team1File" accept="image/*">
+                </div>
+                <div class="preview-box">
+                    <p>🔵 Blue Army</p>
+                    <img id="team2Preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%234ecdc4' width='100' height='100'/%3E%3C/svg%3E" alt="Team 2">
+                    <input type="file" id="team2File" accept="image/*">
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button onclick="startGameWithFlags()">✓ START GAME</button>
+            </div>
         </div>
     </div>
-
-    <audio id="bounceSound" src="zvuk1.mp3"></audio>
-    <audio id="sawCollisionSound" src="zvuk2.mp3"></audio>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: false });
-        const message = document.getElementById('message');
-        const hp1Span = document.getElementById('hp1');
-        const hp2Span = document.getElementById('hp2');
-        const name1Span = document.getElementById('name1');
-        const name2Span = document.getElementById('name2');
-        const newGameBtn = document.getElementById('newGameBtn');
-        const settingsBtn = document.getElementById('settingsBtn');
-        const settingsModal = document.getElementById('settingsModal');
-        const bounceSound = document.getElementById('bounceSound');
-        const sawCollisionSound = document.getElementById('sawCollisionSound');
+        const gridSize = 1600;
+        const gridCols = 40;
+        let territories = new Array(gridSize).fill('neutral');
+        let isPaused = true;
+        let gameStarted = false;
+        let gameRunning = true;
+        let gameSpeed = 30;
+        let gameInterval = null;
+        let team1Flag = null;
+        let team2Flag = null;
 
-        let gameOver = false;
-        let winner = '';
-        let player1Name = 'Ball 1';
-        let player2Name = 'Ball 2';
-        let ballRadius = 20;
-        let initialHP = 2;
-        let ball1Img = new Image();
-        let ball2Img = new Image();
+        const pauseButton = document.querySelector('button:nth-of-type(2)');
 
-        const ball1 = {
-            x: 80,
-            y: 200,
-            vx: 2,
-            vy: 1.5,
-            radius: ballRadius,
-            hp: initialHP,
-            hasSaw: false,
-            sawAngle: 0,
-            mass: 1
-        };
-
-        const ball2 = {
-            x: 320,
-            y: 200,
-            vx: -2,
-            vy: -1.5,
-            radius: ballRadius,
-            hp: initialHP,
-            hasSaw: false,
-            sawAngle: 0,
-            mass: 1
-        };
-
-        let saws = [];
-        let collisionCooldown = 0;
-        let lastSawTime = 0;
-
-        function createSaw() {
-            const now = Date.now();
-            if (now - lastSawTime > 3000 && Math.random() < 0.3 && saws.length < 1) {
-                saws.push({
-                    x: Math.random() * (canvas.width - 60) + 30,
-                    y: Math.random() * (canvas.height - 60) + 30,
-                    radius: 12,
-                    angle: 0,
-                    collected: false
-                });
-                lastSawTime = now;
+        // Слушатели для выбора флагов
+        document.getElementById('team1File').addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    team1Flag = event.target.result;
+                    document.getElementById('team1Preview').src = team1Flag;
+                };
+                reader.readAsDataURL(e.target.files[0]);
             }
+        });
+
+        document.getElementById('team2File').addEventListener('change', function(e) {
+            if (e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    team2Flag = event.target.result;
+                    document.getElementById('team2Preview').src = team2Flag;
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        });
+
+        function isCorner(index) {
+            return index === 0 || index === gridCols - 1 || index === gridSize - gridCols || index === gridSize - 1;
         }
 
-        function drawSaw(saw) {
-            ctx.save();
-            ctx.translate(saw.x, saw.y);
-            ctx.rotate(saw.angle);
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath();
-            ctx.arc(0, 0, saw.radius, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.strokeStyle = '#FF8C00';
-            ctx.lineWidth = 2;
-            for (let i = 0; i < 8; i++) {
-                const a = (Math.PI * 2 * i) / 8;
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                ctx.lineTo(Math.cos(a) * 15, Math.sin(a) * 15);
-                ctx.stroke();
-            }
-            ctx.restore();
-        }
-
-        function drawBall(ball, color, img) {
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            ctx.clip();
-            if (img.complete && img.naturalWidth > 0) {
-                ctx.drawImage(img, ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2);
-            } else {
-                ctx.fillStyle = color;
-                ctx.fill();
-            }
-            ctx.restore();
-
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-            ctx.stroke();
-
-            if (ball.hasSaw) {
-                ctx.save();
-                ctx.translate(ball.x, ball.y);
-                ctx.rotate(ball.sawAngle);
-                ctx.fillStyle = '#A9A9A9';
-                const spikesCount = 12;
-                const spikeLength = 15;
-                const baseWidth = 0.2;
-                for (let i = 0; i < spikesCount; i++) {
-                    const angle = (Math.PI * 2 * i) / spikesCount;
-                    const base1 = angle - baseWidth;
-                    const base2 = angle + baseWidth;
-                    ctx.beginPath();
-                    ctx.moveTo(Math.cos(base1) * ball.radius, Math.sin(base1) * ball.radius);
-                    ctx.lineTo(Math.cos(base2) * ball.radius, Math.sin(base2) * ball.radius);
-                    ctx.lineTo(Math.cos(angle) * (ball.radius + spikeLength), Math.sin(angle) * (ball.radius + spikeLength));
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.strokeStyle = '#808080';
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                }
-                ctx.restore();
-            }
-        }
-
-        function updateBall(ball) {
-            ball.x += ball.vx;
-            ball.y += ball.vy;
-            let bounced = false;
-            if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
-                ball.vx *= -1;
-                ball.x = Math.max(ball.radius, Math.min(canvas.width - ball.radius, ball.x));
-                bounced = true;
-            }
-            if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
-                ball.vy *= -1;
-                ball.y = Math.max(ball.radius, Math.min(canvas.height - ball.radius, ball.y));
-                bounced = true;
-            }
-            if (bounced) {
-                bounceSound.play().catch(() => {});
-            }
-            if (ball.hasSaw) {
-                ball.sawAngle += 0.1;
-            }
-        }
-
-        function checkBallCollision() {
-            if (collisionCooldown > 0) {
-                collisionCooldown--;
+        function startGameWithFlags() {
+            if (!team1Flag || !team2Flag) {
+                alert('Пожалуйста, выберите флаги для обеих армий!');
                 return;
             }
-            const dx = ball2.x - ball1.x;
-            const dy = ball2.y - ball1.y;
-            const distance = Math.sqrt(dx * dx + dy * dy);
-            const minDistance = ball1.radius + ball2.radius;
-            if (distance < minDistance) {
-                collisionCooldown = 30;
-                const nx = dx / distance;
-                const ny = dy / distance;
-                const overlap = (minDistance - distance) / 2 + 3;
-                ball1.x -= overlap * nx;
-                ball1.y -= overlap * ny;
-                ball2.x += overlap * nx;
-                ball2.y += overlap * ny;
-                const v1n = ball1.vx * nx + ball1.vy * ny;
-                const v2n = ball2.vx * nx + ball2.vy * ny;
-                ball1.vx += (v2n - v1n) * nx;
-                ball1.vy += (v2n - v1n) * ny;
-                ball2.vx += (v1n - v2n) * nx;
-                ball2.vy += (v1n - v2n) * ny;
-                let sawCollision = false;
-                if (ball1.hasSaw) {
-                    ball2.hp--;
-                    ball1.hasSaw = false;
-                    hp2Span.textContent = ball2.hp;
-                    sawCollision = true;
-                }
-                if (ball2.hasSaw) {
-                    ball1.hp--;
-                    ball2.hasSaw = false;
-                    hp1Span.textContent = ball1.hp;
-                    sawCollision = true;
-                }
-                if (sawCollision) {
-                    sawCollisionSound.play().catch(() => {});
-                } else {
-                    bounceSound.play().catch(() => {});
-                }
+            document.getElementById('flagModal').classList.remove('show');
+            initGame();
+        }
+
+        function initGame() {
+            renderGrid();
+            territories[0] = 'team1';
+            territories[gridSize - 1] = 'team2';
+            updateStats();
+            startAutoPlay();
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            territories.forEach((team, index) => {
+                const div = document.createElement('div');
+                div.className = `territory ${team}`;
+                div.id = `terr-${index}`;
+                grid.appendChild(div);
+            });
+            
+            // Добавляем флаги поверх карты
+            addFlagOverlays();
+        }
+
+        function addFlagOverlays() {
+            const grid = document.getElementById('grid');
+            
+            // Удаляем старые флаги если есть
+            document.querySelectorAll('.flag-corner').forEach(el => el.remove());
+            
+            // Угол 1 - верхний левый (команда 1 - красный)
+            if (team1Flag) {
+                const topLeft = document.createElement('div');
+                topLeft.className = 'flag-corner top-left';
+                const img1 = document.createElement('img');
+                img1.src = team1Flag;
+                topLeft.appendChild(img1);
+                grid.appendChild(topLeft);
+            }
+            
+            // Угол 4 - нижний правый (команда 2 - синий)
+            if (team2Flag) {
+                const bottomRight = document.createElement('div');
+                bottomRight.className = 'flag-corner bottom-right';
+                const img4 = document.createElement('img');
+                img4.src = team2Flag;
+                bottomRight.appendChild(img4);
+                grid.appendChild(bottomRight);
             }
         }
 
-        function checkSawCollision(ball) {
-            for (let i = saws.length - 1; i >= 0; i--) {
-                const saw = saws[i];
-                const dx = saw.x - ball.x;
-                const dy = saw.y - ball.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                if (distance < ball.radius + saw.radius) {
-                    ball.hasSaw = true;
-                    saws.splice(i, 1);
-                }
+        function addFlagToCorner(index, team) {
+            const element = document.getElementById(`terr-${index}`);
+            if (!element) return;
+            
+            const existingImg = element.querySelector('img');
+            if (existingImg) existingImg.remove();
+            
+            const flag = team === 'team1' ? team1Flag : team2Flag;
+            if (!flag) return;
+            
+            const img = document.createElement('img');
+            img.src = flag;
+            img.style.width = '30%';
+            img.style.height = 'auto';
+            img.style.position = 'absolute';
+            img.style.objectFit = 'contain';
+            img.style.pointerEvents = 'none';
+
+            if (index === 0) {
+                img.style.top = '0';
+                img.style.left = '0';
+            } else if (index === gridCols - 1) {
+                img.style.top = '0';
+                img.style.right = '0';
+            } else if (index === gridSize - gridCols) {
+                img.style.bottom = '0';
+                img.style.left = '0';
+            } else if (index === gridSize - 1) {
+                img.style.bottom = '0';
+                img.style.right = '0';
             }
+
+            element.appendChild(img);
         }
 
-        function gameLoop() {
-            ctx.fillStyle = '#f8f9fa';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            if (!gameOver) {
-                createSaw();
-                updateBall(ball1);
-                updateBall(ball2);
-                checkSawCollision(ball1);
-                checkSawCollision(ball2);
-                checkBallCollision();
-                saws.forEach(saw => {
-                    saw.angle += 0.05;
-                });
-                if (ball1.hp <= 0) {
-                    gameOver = true;
-                    winner = `🟢 ${player2Name} wins! 🎉`;
-                } else if (ball2.hp <= 0) {
-                    gameOver = true;
-                    winner = `🔴 ${player1Name} wins! 🎉`;
+        function addFlagToTerritory(index, team) {
+            const element = document.getElementById(`terr-${index}`);
+            if (!element) return;
+            
+            const existingImg = element.querySelector('img');
+            if (existingImg) existingImg.remove();
+            
+            const flag = team === 'team1' ? team1Flag : team2Flag;
+            if (!flag) return;
+            
+            const img = document.createElement('img');
+            img.src = flag;
+            img.style.width = '50%';
+            img.style.height = '50%';
+            img.style.objectFit = 'contain';
+            img.style.position = 'absolute';
+            img.style.pointerEvents = 'none';
+            img.style.opacity = '0.7';
+            img.onerror = function() {
+                console.log('Flag failed to load for team', team);
+            };
+            element.appendChild(img);
+        }
+
+        function createBloodEffect(element, team) {
+            const bloodContainer = document.createElement('div');
+            bloodContainer.className = 'blood';
+            
+            const dropCount = 15;
+            for (let i = 0; i < dropCount; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'blood-drop';
+                const size = Math.random() * 8 + 2;
+                drop.style.width = size + 'px';
+                drop.style.height = size + 'px';
+                drop.style.left = Math.random() * 100 + '%';
+                drop.style.top = Math.random() * 100 + '%';
+                drop.style.background = team === 'team1' ? '#ff6b6b' : '#4ecdc4';
+                
+                const angle = (Math.PI * 2 * i) / dropCount;
+                const distance = 40 + Math.random() * 20;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                drop.style.setProperty('--tx', tx + 'px');
+                drop.style.setProperty('--ty', ty + 'px');
+                
+                bloodContainer.appendChild(drop);
+            }
+            
+            element.appendChild(bloodContainer);
+            setTimeout(() => bloodContainer.remove(), 900);
+        }
+
+        function captureTerritory(index, newTeam, attackerIndex = null) {
+            if (territories[index] === newTeam) return false;
+            
+            const oldTeam = territories[index];
+            territories[index] = newTeam;
+            
+            const element = document.getElementById(`terr-${index}`);
+            if (element) {
+                element.className = `territory ${newTeam}`;
+                element.classList.add('captured');
+                
+                createBloodEffect(element, newTeam);
+                addFlagToTerritory(index, newTeam);
+                
+                if (isCorner(index)) {
+                    addFlagToCorner(index, newTeam);
                 }
             }
-            saws.forEach(drawSaw);
-            drawBall(ball1, '#ff6b6b', ball1Img);
-            drawBall(ball2, '#4CAF50', ball2Img);
-            if (gameOver) {
-                message.textContent = winner;
+            
+            return oldTeam !== newTeam;
+        }
+
+        function getNeighbors(index) {
+            const neighbors = [];
+            const col = index % gridCols;
+            const row = Math.floor(index / gridCols);
+            
+            const directions = [
+                -gridCols, gridCols, -1, 1,
+                -gridCols - 1, -gridCols + 1, gridCols - 1, gridCols + 1
+            ];
+            
+            directions.forEach(d => {
+                const n = index + d;
+                if (n >= 0 && n < gridSize) {
+                    const nCol = n % gridCols;
+                    const nRow = Math.floor(n / gridCols);
+                    
+                    if (Math.abs(nCol - col) <= 1 && Math.abs(nRow - row) <= 1) {
+                        neighbors.push(n);
+                    }
+                }
+            });
+            
+            return neighbors;
+        }
+
+        function makeAttack(team) {
+            const ownTerritories = territories
+                .map((t, i) => t === team ? i : -1)
+                .filter(i => i !== -1);
+            
+            if (ownTerritories.length === 0) return false;
+            
+            const randomOwn = ownTerritories[Math.floor(Math.random() * ownTerritories.length)];
+            const neighbors = getNeighbors(randomOwn);
+            
+            const targets = neighbors.filter(n => territories[n] !== team);
+            
+            if (targets.length === 0) return false;
+            
+            const target = targets[Math.floor(Math.random() * targets.length)];
+            return captureTerritory(target, team, randomOwn);
+        }
+
+        function checkArmiesInContact() {
+            for (let i = 0; i < gridSize; i++) {
+                if (territories[i] === 'team1') {
+                    const neighbors = getNeighbors(i);
+                    if (neighbors.some(n => territories[n] === 'team2')) {
+                        return true;
+                    }
+                }
             }
-            requestAnimationFrame(gameLoop);
+            return false;
+        }
+
+        function updateStats() {
+            const team1 = territories.filter(t => t === 'team1').length;
+            const team2 = territories.filter(t => t === 'team2').length;
+            const neutral = territories.filter(t => t === 'neutral').length;
+            
+            document.getElementById('team1-count').textContent = team1;
+            document.getElementById('team2-count').textContent = team2;
+            document.getElementById('neutral-count').textContent = neutral;
+            
+            return neutral > 0;
+        }
+
+        function startAutoPlay() {
+            if (gameInterval) clearInterval(gameInterval);
+            gameInterval = setInterval(() => {
+                if (!isPaused && gameRunning) {
+                    const hasContact = checkArmiesInContact();
+                    
+                    if (hasContact) {
+                        for (let i = 0; i < 8; i++) {
+                            makeAttack('team1');
+                            makeAttack('team2');
+                        }
+                    } else {
+                        for (let i = 0; i < 3; i++) {
+                            makeAttack('team1');
+                            makeAttack('team2');
+                        }
+                    }
+                    
+                    if (!updateStats()) {
+                        clearInterval(gameInterval);
+                        gameRunning = false;
+                        setTimeout(() => {
+                            const team1Count = territories.filter(t => t === 'team1').length;
+                            const winner = team1Count > 0 ? '🔴 RED ARMY' : '🔵 BLUE ARMY';
+                            alert('⚔️ GAME OVER! ' + winner + ' WINS! ⚔️');
+                        }, 500);
+                    }
+                }
+            }, gameSpeed);
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            if (!isPaused) gameStarted = true;
+            pauseButton.textContent = isPaused ? (gameStarted ? '▶️ RESUME' : '▶️ START') : '⏸️ PAUSE';
+        }
+
+        function speedUp() {
+            gameSpeed = Math.max(5, gameSpeed - 10);
+            if (gameInterval) {
+                clearInterval(gameInterval);
+                startAutoPlay();
+            }
         }
 
         function resetGame() {
-            ball1.x = canvas.width * 0.2;
-            ball1.y = canvas.height / 2;
-            ball1.vx = 2;
-            ball1.vy = 1.5;
-            ball1.hp = initialHP;
-            ball1.hasSaw = false;
-            ball1.sawAngle = 0;
-            ball2.x = canvas.width * 0.8;
-            ball2.y = canvas.height / 2;
-            ball2.vx = -2;
-            ball2.vy = -1.5;
-            ball2.hp = initialHP;
-            ball2.hasSaw = false;
-            ball2.sawAngle = 0;
-            saws = [];
-            gameOver = false;
-            winner = '';
-            collisionCooldown = 0;
-            lastSawTime = 0;
-            hp1Span.textContent = ball1.hp;
-            hp2Span.textContent = ball2.hp;
-            message.textContent = '';
+            if (gameInterval) clearInterval(gameInterval);
+            gameRunning = false;
+            territories = new Array(gridSize).fill('neutral');
+            territories[0] = 'team1';
+            territories[gridSize - 1] = 'team2';
+            gameSpeed = 30;
+            renderGrid();
+            updateStats();
+            isPaused = true;
+            gameStarted = false;
+            pauseButton.textContent = '▶️ START';
+            gameRunning = true;
+            startAutoPlay();
         }
 
-        function openSettings() {
-            settingsModal.style.display = 'flex';
-            document.getElementById('nameInput1').value = player1Name;
-            document.getElementById('nameInput2').value = player2Name;
-            document.getElementById('sizeSlider').value = ballRadius;
-            document.getElementById('hpInput').value = initialHP;
-        }
-
-        function closeSettings() {
-            settingsModal.style.display = 'none';
-        }
-
-        function saveSettings() {
-            player1Name = document.getElementById('nameInput1').value || 'Ball 1';
-            player2Name = document.getElementById('nameInput2').value || 'Ball 2';
-            name1Span.textContent = player1Name;
-            name2Span.textContent = player2Name;
-            ballRadius = parseInt(document.getElementById('sizeSlider').value);
-            ball1.radius = ballRadius;
-            ball2.radius = ballRadius;
-            initialHP = parseInt(document.getElementById('hpInput').value) || 2;
-            const file1 = document.getElementById('fileInput1').files[0];
-            if (file1) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    ball1Img.src = e.target.result;
-                };
-                reader.readAsDataURL(file1);
-            }
-            const file2 = document.getElementById('fileInput2').files[0];
-            if (file2) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    ball2Img.src = e.target.result;
-                };
-                reader.readAsDataURL(file2);
-            }
-            closeSettings();
-            resetGame();
-        }
-
-        function resizeCanvas() {
-            const size = Math.min(window.innerWidth - 20, window.innerHeight - 150, 400);
-            canvas.width = size;
-            canvas.height = size;
-            canvas.style.width = `${size}px`;
-            canvas.style.height = `${size}px`;
-            ball1.x = size * 0.2;
-            ball2.x = size * 0.8;
-            ball1.y = size / 2;
-            ball2.y = size / 2;
-        }
-
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
-        newGameBtn.onclick = resetGame;
-        settingsBtn.onclick = openSettings;
-        gameLoop();
+        document.getElementById('flagModal').classList.add('show');
     </script>
 </body>
 </html>

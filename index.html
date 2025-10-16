@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Битва шариков</title>
+    <title></title>
     <style>
         body {
             margin: 0;
@@ -27,12 +27,6 @@
             width: 100%;
             max-width: 500px;
             box-sizing: border-box;
-        }
-
-        h1 {
-            color: #333;
-            margin: 0 0 15px 0;
-            font-size: 24px;
         }
 
         .stats {
@@ -102,8 +96,17 @@
             top: 10px;
             right: 10px;
             z-index: 1001;
-            padding: 8px 15px;
-            font-size: 14px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            opacity: 0.3;
+            transition: opacity 0.2s;
+        }
+
+        #settingsBtn:hover {
+            opacity: 0.5;
         }
 
         #settingsModal {
@@ -154,9 +157,6 @@
             .container {
                 padding: 10px;
             }
-            h1 {
-                font-size: 20px;
-            }
             .stats {
                 font-size: 14px;
                 flex-direction: column;
@@ -177,8 +177,12 @@
             #settingsBtn {
                 top: 5px;
                 right: 5px;
-                padding: 6px 12px;
-                font-size: 12px;
+                width: 35px;
+                height: 35px;
+                opacity: 0.3;
+            }
+            #settingsBtn:hover {
+                opacity: 0.5;
             }
             #settingsContent {
                 width: 95%;
@@ -188,9 +192,8 @@
     </style>
 </head>
 <body>
-    <button id="settingsBtn">⚙️ Настройки</button>
+    <button id="settingsBtn"></button>
     <div class="container">
-        <h1>Битва шариков</h1>
         <div class="stats">
             <div class="player player1">🔴 <span id="name1">Ball 1</span>: ❤️ <span id="hp1">2</span></div>
             <div class="player player2">🟢 <span id="name2">Ball 2</span>: ❤️ <span id="hp2">2</span></div>

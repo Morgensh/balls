@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Битва шариков</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        
+        h1 {
+            color: #333;
+            margin: 0 0 20px 0;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        .player {
+            padding: 10px 20px;
+            border-radius: 10px;
+        }
+        
+        .player1 {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .player2 {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        canvas {
+            border: 3px solid #333;
+            border-radius: 10px;
+            display: block;
+            background: #f8f9fa;
+            margin: 20px auto;
+            max-width: 100%;
+            max-height: 100%;
+            touch-action: none;
+        }
+        
+        .message {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
+            min-height: 30px;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            touch-action: manipulation;
+        }
+        
+        button:hover {
+            background: #764ba2;
+        }
+
+        #settingsModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        #settingsContent {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: left;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        #settingsContent label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        #settingsContent input {
+            width: 100%;
+            padding: 5px;
+            margin-top: 5px;
+        }
+
+        #settingsContent button {
+            margin-right: 10px;
+        }
+
+        #settingsBtn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 999;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            canvas {
+                width: 100%;
+                height: auto;
+            }
+            .stats {
+                font-size: 14px;
+            }
+            button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button id="settingsBtn">⚙️ Настройки</button>
+    <div class="container">
+        <div class="stats">
+            <div class="player player1">🔴 <span id="name1">Ball 1</span>: ❤️ <span id="hp1">2</span></div>
+            <div class="player player2">🟢 <span id="name2">Ball 2</span>: ❤️ <span id="hp2">2</span></div>
+        </div>
+        
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        
+        <div class="message" id="message"></div>
+        <button id="newGameBtn">New Game</button>
+    </div>
+
+    <div id="settingsModal">
+        <div id="settingsContent">
+            <label>Имя для Игрока 1: <input id="nameInput1" value="Ball 1"></label>
+            <label>Имя для Игрока 2: <input id="nameInput2" value="Ball 2"></label>
+            <label>Изображение для Игрока 1: <input type="file" id="fileInput1" accept="image/*"></label>
+            <label>Изображение для Игрока 2: <input type="file" id="fileInput2" accept="image/*"></label>
+            <label>Размер шариков: <input type="range" id="sizeSlider" min="10" max="50" value="20"></label>
+            <label>Начальные жизни: <input type="number" id="hpInput" min="1" max="10" value="2"></label>
+            <button onclick="saveSettings()">Сохранить</button>
+            <button onclick="closeSettings()">Отмена</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: true });
+        const message = document.getElementById('message');
+        const hp1Span = document.getElementById('hp1');
+        const hp2Span = document.getElementById('hp2');
+        const name1Span = document.getElementById('name1');
+        const name2Span = document.getElementById('name2');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+
+        let gameOver = false;
+        let winner = '';
+        
+        let player1Name = 'Ball 1';
+        let player2Name = 'Ball 2';
+        let ballRadius = 20;
+        let initialHP = 2;
+        let ball1Img = new Image();
+        let ball2Img = new Image();
+
+        // Объекты шариков
+        const ball1 = {
+            x: 80,
+            y: 200,
+            vx: 2,
+            vy: 1.5,
+            radius: ballRadius,
+            hp: initialHP,
+            hasSaw: false,
+            sawAngle: 0,
+            mass: 1
+        };
+        
+        const ball2 = {
+            x: 320,
+            y: 200,
+            vx: -2,
+            vy: -1.5,
+            radius: ballRadius,
+            hp: initialHP,
+            hasSaw: false,
+            sawAngle: 0,
+            mass: 1
+        };
+        
+        let saws = [];
+        let collisionCooldown = 0;
+        let lastSawTime = 0;
+        
+        // Создание пилы
+        function createSaw() {
+            const now = Date.now();
+            if (now - lastSawTime > 3000 && Math.random() < 0.3 && saws.length < 1) {
+                saws.push({
+                    x: Math.random() * (canvas.width - 60) + 30,
+                    y: Math.random() * (canvas.height - 60) + 30,
+                    radius: 12,
+                    angle: 0,
+                    collected: false
+                });
+                lastSawTime = now;
+            }
+        }
+        
+        // Рисование пилы с ротацией
+        function drawSaw(saw) {
+            ctx.save();
+            ctx.translate(saw.x, saw.y);
+            ctx.rotate(saw.angle);
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(0, 0, saw.radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.strokeStyle = '#FF8C00';
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 8; i++) {
+                const a = (Math.PI * 2 * i) / 8;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(a) * 15, Math.sin(a) * 15);
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
+        
+        // Рисование шарика
+        function drawBall(ball, color, img) {
+            if (img.src) {
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.clip();
+                ctx.drawImage(img, ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2);
+                ctx.restore();
+            } else {
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            if (ball.hasSaw) {
+                // Ротация шипов
+                ctx.save();
+                ctx.translate(ball.x, ball.y);
+                ctx.rotate(ball.sawAngle);
+                
+                ctx.fillStyle = '#A9A9A9'; // Серый для металлического вида
+                const spikesCount = 12;
+                const spikeLength = 15;
+                const baseWidth = 0.2; // Половина ширины базы шипа в радианах
+                
+                for (let i = 0; i < spikesCount; i++) {
+                    const angle = (Math.PI * 2 * i) / spikesCount;
+                    const base1 = angle - baseWidth;
+                    const base2 = angle + baseWidth;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(Math.cos(base1) * ball.radius, Math.sin(base1) * ball.radius);
+                    ctx.lineTo(Math.cos(base2) * ball.radius, Math.sin(base2) * ball.radius);
+                    ctx.lineTo(Math.cos(angle) * (ball.radius + spikeLength), Math.sin(angle) * (ball.radius + spikeLength));
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#808080';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+            }
+        }
+        
+        // Обновление позиции шарика
+        function updateBall(ball) {
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+            
+            // Отскок от стен
+            if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
+                ball.vx *= -1;
+                ball.x = Math.max(ball.radius, Math.min(canvas.width - ball.radius, ball.x));
+            }
+            if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
+                ball.vy *= -1;
+                ball.y = Math.max(ball.radius, Math.min(canvas.height - ball.radius, ball.y));
+            }
+            
+            // Ротация шипов, если есть
+            if (ball.hasSaw) {
+                ball.sawAngle += 0.1; // Скорость ротации
+            }
+        }
+        
+        // Проверка столкновения между шариками
+        function checkBallCollision() {
+            if (collisionCooldown > 0) {
+                collisionCooldown--;
+                return;
+            }
+            
+            const dx = ball2.x - ball1.x;
+            const dy = ball2.y - ball1.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const minDistance = ball1.radius + ball2.radius;
+            
+            if (distance < minDistance) {
+                collisionCooldown = 30;
+                
+                // Нормализуем вектор столкновения
+                const nx = dx / distance;
+                const ny = dy / distance;
+                
+                // Разделяем шарики чтобы не залипали
+                const overlap = (minDistance - distance) / 2 + 3;
+                ball1.x -= overlap * nx;
+                ball1.y -= overlap * ny;
+                ball2.x += overlap * nx;
+                ball2.y += overlap * ny;
+                
+                // Обмениваем скорости вдоль оси столкновения (упругое столкновение)
+                const v1n = ball1.vx * nx + ball1.vy * ny;
+                const v2n = ball2.vx * nx + ball2.vy * ny;
+                
+                // Устанавливаем новые нормальные компоненты скоростей
+                ball1.vx += (v2n - v1n) * nx;
+                ball1.vy += (v2n - v1n) * ny;
+                ball2.vx += (v1n - v2n) * nx;
+                ball2.vy += (v1n - v2n) * ny;
+                
+                // Урон от пилы
+                if (ball1.hasSaw) {
+                    ball2.hp--;
+                    ball1.hasSaw = false;
+                    hp2Span.textContent = ball2.hp;
+                }
+                if (ball2.hasSaw) {
+                    ball1.hp--;
+                    ball2.hasSaw = false;
+                    hp1Span.textContent = ball1.hp;
+                }
+            }
+        }
+        
+        // Проверка столкновения с пилой
+        function checkSawCollision(ball) {
+            for (let i = saws.length - 1; i >= 0; i--) {
+                const saw = saws[i];
+                const dx = saw.x - ball.x;
+                const dy = saw.y - ball.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                if (distance < ball.radius + saw.radius) {
+                    ball.hasSaw = true;
+                    saws.splice(i, 1);
+                }
+            }
+        }
+        
+        // Основной игровой цикл
+        function gameLoop() {
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            if (!gameOver) {
+                createSaw();
+                updateBall(ball1);
+                updateBall(ball2);
+                checkSawCollision(ball1);
+                checkSawCollision(ball2);
+                checkBallCollision();
+                
+                // Ротация пил на поле
+                saws.forEach(saw => {
+                    saw.angle += 0.05; // Медленная ротация для пилы
+                });
+                
+                if (ball1.hp <= 0) {
+                    gameOver = true;
+                    winner = `🟢 ${player2Name} wins! 🎉`;
+                } else if (ball2.hp <= 0) {
+                    gameOver = true;
+                    winner = `🔴 ${player1Name} wins! 🎉`;
+                }
+            }
+            
+            // Рисование пил
+            saws.forEach(drawSaw);
+            
+            drawBall(ball1, '#ff6b6b', ball1Img);
+            drawBall(ball2, '#4CAF50', ball2Img);
+            
+            if (gameOver) {
+                message.textContent = winner;
+            }
+            
+            requestAnimationFrame(gameLoop);
+        }
+
+        function resetGame() {
+            ball1.x = 80;
+            ball1.y = 200;
+            ball1.vx = 2;
+            ball1.vy = 1.5;
+            ball1.hp = initialHP;
+            ball1.hasSaw = false;
+            ball1.sawAngle = 0;
+
+            ball2.x = 320;
+            ball2.y = 200;
+            ball2.vx = -2;
+            ball2.vy = -1.5;
+            ball2.hp = initialHP;
+            ball2.hasSaw = false;
+            ball2.sawAngle = 0;
+
+            saws = [];
+            gameOver = false;
+            winner = '';
+            collisionCooldown = 0;
+            lastSawTime = 0;
+
+            hp1Span.textContent = ball1.hp;
+            hp2Span.textContent = ball2.hp;
+            message.textContent = '';
+        }
+
+        function openSettings() {
+            settingsModal.style.display = 'flex';
+            document.getElementById('nameInput1').value = player1Name;
+            document.getElementById('nameInput2').value = player2Name;
+            // File inputs can't have value set for security, so they remain empty
+            document.getElementById('sizeSlider').value = ballRadius;
+            document.getElementById('hpInput').value = initialHP;
+        }
+
+        function closeSettings() {
+            settingsModal.style.display = 'none';
+        }
+
+        function saveSettings() {
+            player1Name = document.getElementById('nameInput1').value || 'Ball 1';
+            player2Name = document.getElementById('nameInput2').value || 'Ball 2';
+            name1Span.textContent = player1Name;
+            name2Span.textContent = player2Name;
+
+            ballRadius = parseInt(document.getElementById('sizeSlider').value);
+            ball1.radius = ballRadius;
+            ball2.radius = ballRadius;
+
+            initialHP = parseInt(document.getElementById('hpInput').value) || 2;
+
+            const file1 = document.getElementById('fileInput1').files[0];
+            if (file1) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    ball1Img.src = e.target.result;
+                };
+                reader.readAsDataURL(file1);
+            }
+
+            const file2 = document.getElementById('fileInput2').files[0];
+            if (file2) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    ball2Img.src = e.target.result;
+                };
+                reader.readAsDataURL(file2);
+            }
+
+            closeSettings();
+            resetGame();
+        }
+
+        // Адаптация canvas под устройства
+        function resizeCanvas() {
+            const size = Math.min(window.innerWidth - 40, window.innerHeight - 200, 400);
+            canvas.width = size;
+            canvas.height = size;
+            ball1.x = size * 0.2;
+            ball2.x = size * 0.8;
+            ball1.y = size / 2;
+            ball2.y = size / 2;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        newGameBtn.onclick = resetGame;
+        settingsBtn.onclick = openSettings;
+
+        gameLoop();
+    </script>
+</body>
+</html>

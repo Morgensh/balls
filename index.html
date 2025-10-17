@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>War for Territory</title>
+    <title>War for Territory - Optimized</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
         }
         body {
             display: flex;
@@ -39,13 +38,11 @@
             text-shadow: 0 0 20px rgba(255, 107, 107, 0.8), 0 0 10px rgba(78, 205, 196, 0.8);
             font-size: clamp(20px, 5vw, 28px);
             letter-spacing: 2px;
-            margin: 0;
         }
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
-            width: 100%;
         }
         .stat-box {
             padding: 10px 12px;
@@ -53,7 +50,6 @@
             text-align: center;
             font-weight: bold;
             border: 2px solid;
-            transition: all 0.3s ease;
             font-size: clamp(12px, 3vw, 14px);
             min-height: 50px;
             display: flex;
@@ -77,158 +73,47 @@
             border-color: #666;
             color: #aaa;
         }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(40, 1fr);
-            gap: 2px;
-            padding: 12px;
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
             background: #0a0d15;
-            border-radius: 8px;
             border: 2px solid #1a2540;
+            border-radius: 8px;
             box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
-            position: relative;
-            aspect-ratio: 1;
-            width: 100%;
+            overflow: hidden;
         }
-        .flag-corner {
-            position: absolute;
-            width: 60px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-            z-index: 10;
-        }
-        .flag-corner img {
+        #gameCanvas {
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.8));
-        }
-        .flag-corner.top-left {
-            top: 10px;
-            left: 10px;
-        }
-        .flag-corner.top-right {
-            top: 10px;
-            right: 10px;
-        }
-        .flag-corner.bottom-left {
-            bottom: 10px;
-            left: 10px;
-        }
-        .flag-corner.bottom-right {
-            bottom: 10px;
-            right: 10px;
-        }
-        .territory {
-            aspect-ratio: 1;
-            border: 0.5px solid #333;
-            border-radius: 1px;
-            cursor: pointer;
-            transition: all 0.05s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: visible;
-            min-width: 0;
-            min-height: 0;
-        }
-        .territory img {
-            position: absolute;
-            width: 50%;
-            height: 50%;
-            object-fit: contain;
-            pointer-events: none;
-            opacity: 0.6;
-        }
-        .territory.team1 {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff5252 100%);
-            border-color: #ff4444;
-            box-shadow: inset 0 0 4px rgba(255, 0, 0, 0.6);
-        }
-        .territory.team2 {
-            background: linear-gradient(135deg, #4ecdc4 0%, #45b7aa 100%);
-            border-color: #3ba89f;
-            box-shadow: inset 0 0 4px rgba(0, 255, 200, 0.6);
-        }
-        .territory.neutral {
-            background: #1a2535;
-            border-color: #222;
-        }
-        @keyframes blood-splatter {
-            0% {
-                opacity: 1;
-                transform: translate(0, 0) scale(1) rotate(0deg);
-            }
-            30% {
-                opacity: 0.9;
-            }
-            100% {
-                opacity: 0;
-                transform: translate(var(--tx), var(--ty)) scale(0.3) rotate(360deg);
-            }
-        }
-        @keyframes pulse-capture {
-            0% {
-                filter: brightness(1.8) drop-shadow(0 0 12px rgba(255, 255, 255, 0.9));
-                transform: scale(0.8);
-            }
-            50% {
-                filter: brightness(1.5) drop-shadow(0 0 20px rgba(255, 255, 255, 0.7));
-                transform: scale(1.1);
-            }
-            100% {
-                filter: brightness(1) drop-shadow(0 0 0px rgba(255, 255, 255, 0));
-                transform: scale(1);
-            }
-        }
-        .territory.captured {
-            animation: pulse-capture 0.6s ease-out;
-        }
-        .blood {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-        .blood-drop {
-            position: absolute;
-            border-radius: 50%;
-            animation: blood-splatter 0.9s ease-out forwards;
-            filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.9));
+            display: block;
         }
         .buttons {
             display: flex;
             gap: 10px;
             justify-content: center;
             flex-wrap: wrap;
-            width: 100%;
         }
         button {
             padding: 12px 18px;
-            border: 2px solid;
+            border: 2px solid #4ecdc4;
             border-radius: 8px;
             font-size: clamp(12px, 3vw, 14px);
             cursor: pointer;
             font-weight: bold;
-            transition: all 0.3s ease;
             background: #16213e;
             color: #4ecdc4;
-            border-color: #4ecdc4;
             text-shadow: 0 0 5px rgba(78, 205, 196, 0.5);
             white-space: nowrap;
             flex: 1;
             min-width: 100px;
+            transition: all 0.3s ease;
         }
         button:hover {
             background: #4ecdc4;
             color: #0f1419;
             box-shadow: 0 0 20px rgba(78, 205, 196, 0.6);
             transform: scale(1.05);
-            text-shadow: none;
         }
         button:active {
             transform: scale(0.95);
@@ -292,20 +177,6 @@
             color: #4ecdc4;
             width: 100%;
         }
-        .preview-box input[type="file"]::file-selector-button {
-            background: #16213e;
-            color: #4ecdc4;
-            border: 2px solid #4ecdc4;
-            border-radius: 6px;
-            padding: 8px 12px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-        .preview-box input[type="file"]::file-selector-button:hover {
-            background: #4ecdc4;
-            color: #0f1419;
-        }
         .modal-buttons {
             display: flex;
             gap: 10px;
@@ -314,24 +185,6 @@
         .modal-buttons button {
             flex: 1;
             padding: 12px;
-        }
-        @media (max-width: 480px) {
-            .container {
-                padding: 12px;
-                gap: 12px;
-            }
-            .stat-box {
-                font-size: 11px;
-                padding: 8px;
-                min-height: 45px;
-            }
-            button {
-                padding: 10px 14px;
-                min-width: 80px;
-            }
-            .modal-content {
-                padding: 20px;
-            }
         }
     </style>
 </head>
@@ -351,7 +204,9 @@
             </div>
         </div>
 
-        <div class="grid" id="grid"></div>
+        <div class="canvas-wrapper">
+            <canvas id="gameCanvas" width="400" height="400"></canvas>
+        </div>
 
         <div class="buttons">
             <button onclick="resetGame()">🔄 RESET</button>
@@ -384,25 +239,39 @@
     </div>
 
     <script>
-        const gridSize = 1600;
-        const gridCols = 40;
-        let territories = new Array(gridSize).fill('neutral');
+        const GRID_SIZE = 1600;
+        const GRID_COLS = 40;
+        const CELL_SIZE = 10;
+        
+        let territories = new Uint8Array(GRID_SIZE);
         let isPaused = true;
-        let gameStarted = false;
         let gameRunning = true;
         let gameSpeed = 30;
         let gameInterval = null;
+        let animationId = null;
         let team1Flag = null;
         let team2Flag = null;
+        let reinforcements = [];
+        let team1FlagImg = null;
+        let team2FlagImg = null;
 
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false });
         const pauseButton = document.querySelector('button:nth-of-type(2)');
 
-        // Слушатели для выбора флагов
+        const COLORS = {
+            0: '#1a2535',
+            1: '#ff6b6b',
+            2: '#4ecdc4'
+        };
+
         document.getElementById('team1File').addEventListener('change', function(e) {
             if (e.target.files[0]) {
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     team1Flag = event.target.result;
+                    team1FlagImg = new Image();
+                    team1FlagImg.src = team1Flag;
                     document.getElementById('team1Preview').src = team1Flag;
                 };
                 reader.readAsDataURL(e.target.files[0]);
@@ -414,19 +283,17 @@
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     team2Flag = event.target.result;
+                    team2FlagImg = new Image();
+                    team2FlagImg.src = team2Flag;
                     document.getElementById('team2Preview').src = team2Flag;
                 };
                 reader.readAsDataURL(e.target.files[0]);
             }
         });
 
-        function isCorner(index) {
-            return index === 0 || index === gridCols - 1 || index === gridSize - gridCols || index === gridSize - 1;
-        }
-
         function startGameWithFlags() {
             if (!team1Flag || !team2Flag) {
-                alert('Пожалуйста, выберите флаги для обеих армий!');
+                alert('Select flags for both armies!');
                 return;
             }
             document.getElementById('flagModal').classList.remove('show');
@@ -434,194 +301,101 @@
         }
 
         function initGame() {
-            renderGrid();
-            territories[0] = 'team1';
-            territories[gridSize - 1] = 'team2';
+            territories.fill(0);
+            territories[0] = 1;
+            territories[GRID_SIZE - 1] = 2;
+            reinforcements = [];
+            renderCanvas();
             updateStats();
             startAutoPlay();
         }
 
-        function renderGrid() {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = '';
-            
-            territories.forEach((team, index) => {
-                const div = document.createElement('div');
-                div.className = `territory ${team}`;
-                div.id = `terr-${index}`;
-                grid.appendChild(div);
-            });
-            
-            // Добавляем флаги поверх карты
-            addFlagOverlays();
-        }
-
-        function addFlagOverlays() {
-            const grid = document.getElementById('grid');
-            
-            // Удаляем старые флаги если есть
-            document.querySelectorAll('.flag-corner').forEach(el => el.remove());
-            
-            // Угол 1 - верхний левый (команда 1 - красный)
-            if (team1Flag) {
-                const topLeft = document.createElement('div');
-                topLeft.className = 'flag-corner top-left';
-                const img1 = document.createElement('img');
-                img1.src = team1Flag;
-                topLeft.appendChild(img1);
-                grid.appendChild(topLeft);
-            }
-            
-            // Угол 4 - нижний правый (команда 2 - синий)
-            if (team2Flag) {
-                const bottomRight = document.createElement('div');
-                bottomRight.className = 'flag-corner bottom-right';
-                const img4 = document.createElement('img');
-                img4.src = team2Flag;
-                bottomRight.appendChild(img4);
-                grid.appendChild(bottomRight);
-            }
-        }
-
-        function addFlagToCorner(index, team) {
-            const element = document.getElementById(`terr-${index}`);
-            if (!element) return;
-            
-            const existingImg = element.querySelector('img');
-            if (existingImg) existingImg.remove();
-            
-            const flag = team === 'team1' ? team1Flag : team2Flag;
+        function drawFlag(x, y, flag) {
             if (!flag) return;
-            
-            const img = document.createElement('img');
-            img.src = flag;
-            img.style.width = '30%';
-            img.style.height = 'auto';
-            img.style.position = 'absolute';
-            img.style.objectFit = 'contain';
-            img.style.pointerEvents = 'none';
-
-            if (index === 0) {
-                img.style.top = '0';
-                img.style.left = '0';
-            } else if (index === gridCols - 1) {
-                img.style.top = '0';
-                img.style.right = '0';
-            } else if (index === gridSize - gridCols) {
-                img.style.bottom = '0';
-                img.style.left = '0';
-            } else if (index === gridSize - 1) {
-                img.style.bottom = '0';
-                img.style.right = '0';
-            }
-
-            element.appendChild(img);
-        }
-
-        function addFlagToTerritory(index, team) {
-            const element = document.getElementById(`terr-${index}`);
-            if (!element) return;
-            
-            const existingImg = element.querySelector('img');
-            if (existingImg) existingImg.remove();
-            
-            const flag = team === 'team1' ? team1Flag : team2Flag;
-            if (!flag) return;
-            
-            const img = document.createElement('img');
-            img.src = flag;
-            img.style.width = '50%';
-            img.style.height = '50%';
-            img.style.objectFit = 'contain';
-            img.style.position = 'absolute';
-            img.style.pointerEvents = 'none';
-            img.style.opacity = '0.7';
-            img.onerror = function() {
-                console.log('Flag failed to load for team', team);
+            const img = new Image();
+            img.onload = function() {
+                ctx.drawImage(img, x - 5, y - 5, 10, 10);
             };
-            element.appendChild(img);
+            img.src = flag;
         }
 
-        function createBloodEffect(element, team) {
-            const bloodContainer = document.createElement('div');
-            bloodContainer.className = 'blood';
-            
-            const dropCount = 15;
-            for (let i = 0; i < dropCount; i++) {
-                const drop = document.createElement('div');
-                drop.className = 'blood-drop';
-                const size = Math.random() * 8 + 2;
-                drop.style.width = size + 'px';
-                drop.style.height = size + 'px';
-                drop.style.left = Math.random() * 100 + '%';
-                drop.style.top = Math.random() * 100 + '%';
-                drop.style.background = team === 'team1' ? '#ff6b6b' : '#4ecdc4';
-                
-                const angle = (Math.PI * 2 * i) / dropCount;
-                const distance = 40 + Math.random() * 20;
-                const tx = Math.cos(angle) * distance;
-                const ty = Math.sin(angle) * distance;
-                drop.style.setProperty('--tx', tx + 'px');
-                drop.style.setProperty('--ty', ty + 'px');
-                
-                bloodContainer.appendChild(drop);
-            }
-            
-            element.appendChild(bloodContainer);
-            setTimeout(() => bloodContainer.remove(), 900);
-        }
+        function renderCanvas() {
+            ctx.fillStyle = COLORS[0];
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        function captureTerritory(index, newTeam, attackerIndex = null) {
-            if (territories[index] === newTeam) return false;
-            
-            const oldTeam = territories[index];
-            territories[index] = newTeam;
-            
-            const element = document.getElementById(`terr-${index}`);
-            if (element) {
-                element.className = `territory ${newTeam}`;
-                element.classList.add('captured');
-                
-                createBloodEffect(element, newTeam);
-                addFlagToTerritory(index, newTeam);
-                
-                if (isCorner(index)) {
-                    addFlagToCorner(index, newTeam);
+            // Рисуем территории
+            for (let i = 0; i < GRID_SIZE; i++) {
+                const team = territories[i];
+                if (team > 0) {
+                    const row = Math.floor(i / GRID_COLS);
+                    const col = i % GRID_COLS;
+                    const x = col * CELL_SIZE;
+                    const y = row * CELL_SIZE;
+                    
+                    ctx.fillStyle = COLORS[team];
+                    ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
                 }
             }
-            
-            return oldTeam !== newTeam;
+
+            // Рисуем флаги в углах
+            if (team1FlagImg && team1FlagImg.complete) {
+                ctx.drawImage(team1FlagImg, 0, 0, 40, 40);
+            }
+            if (team2FlagImg && team2FlagImg.complete) {
+                ctx.drawImage(team2FlagImg, canvas.width - 40, canvas.height - 40, 40, 40);
+            }
+
+            // Рисуем подкрепления
+            for (let r of reinforcements) {
+                const progress = r.time / r.duration;
+                const startX = r.startX;
+                const startY = r.startY;
+                const endX = r.endX;
+                const endY = r.endY;
+                
+                const x = startX + (endX - startX) * progress;
+                const y = startY + (endY - startY) * progress;
+                
+                const size = 3 + Math.sin(r.time * 0.3) * 1;
+                ctx.fillStyle = r.team === 1 ? 'rgba(255, 107, 107, 0.8)' : 'rgba(78, 205, 196, 0.8)';
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Свечение
+                ctx.strokeStyle = r.team === 1 ? 'rgba(255, 107, 107, 0.4)' : 'rgba(78, 205, 196, 0.4)';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(x, y, size + 2, 0, Math.PI * 2);
+                ctx.stroke();
+            }
         }
 
         function getNeighbors(index) {
             const neighbors = [];
-            const col = index % gridCols;
-            const row = Math.floor(index / gridCols);
+            const col = index % GRID_COLS;
+            const row = Math.floor(index / GRID_COLS);
             
-            const directions = [
-                -gridCols, gridCols, -1, 1,
-                -gridCols - 1, -gridCols + 1, gridCols - 1, gridCols + 1
-            ];
-            
-            directions.forEach(d => {
-                const n = index + d;
-                if (n >= 0 && n < gridSize) {
-                    const nCol = n % gridCols;
-                    const nRow = Math.floor(n / gridCols);
-                    
-                    if (Math.abs(nCol - col) <= 1 && Math.abs(nRow - row) <= 1) {
-                        neighbors.push(n);
+            for (let dy = -1; dy <= 1; dy++) {
+                for (let dx = -1; dx <= 1; dx++) {
+                    if (dx === 0 && dy === 0) continue;
+                    const newRow = row + dy;
+                    const newCol = col + dx;
+                    if (newRow >= 0 && newRow < GRID_COLS && newCol >= 0 && newCol < GRID_COLS) {
+                        neighbors.push(newRow * GRID_COLS + newCol);
                     }
                 }
-            });
-            
+            }
             return neighbors;
         }
 
         function makeAttack(team) {
-            const ownTerritories = territories
-                .map((t, i) => t === team ? i : -1)
-                .filter(i => i !== -1);
+            const ownTerritories = [];
+            for (let i = 0; i < GRID_SIZE; i++) {
+                if (territories[i] === team) {
+                    ownTerritories.push(i);
+                }
+            }
             
             if (ownTerritories.length === 0) return false;
             
@@ -629,18 +403,38 @@
             const neighbors = getNeighbors(randomOwn);
             
             const targets = neighbors.filter(n => territories[n] !== team);
-            
             if (targets.length === 0) return false;
             
             const target = targets[Math.floor(Math.random() * targets.length)];
-            return captureTerritory(target, team, randomOwn);
+            if (territories[target] !== team) {
+                territories[target] = team;
+                
+                // Создаем анимацию подкрепления
+                const startRow = Math.floor(randomOwn / GRID_COLS);
+                const startCol = randomOwn % GRID_COLS;
+                const targetRow = Math.floor(target / GRID_COLS);
+                const targetCol = target % GRID_COLS;
+                
+                reinforcements.push({
+                    startX: startCol * CELL_SIZE + CELL_SIZE / 2,
+                    startY: startRow * CELL_SIZE + CELL_SIZE / 2,
+                    endX: targetCol * CELL_SIZE + CELL_SIZE / 2,
+                    endY: targetRow * CELL_SIZE + CELL_SIZE / 2,
+                    team: team,
+                    time: 0,
+                    duration: 15
+                });
+                
+                return true;
+            }
+            return false;
         }
 
         function checkArmiesInContact() {
-            for (let i = 0; i < gridSize; i++) {
-                if (territories[i] === 'team1') {
+            for (let i = 0; i < GRID_SIZE; i++) {
+                if (territories[i] === 1) {
                     const neighbors = getNeighbors(i);
-                    if (neighbors.some(n => territories[n] === 'team2')) {
+                    if (neighbors.some(n => territories[n] === 2)) {
                         return true;
                     }
                 }
@@ -649,52 +443,60 @@
         }
 
         function updateStats() {
-            const team1 = territories.filter(t => t === 'team1').length;
-            const team2 = territories.filter(t => t === 'team2').length;
-            const neutral = territories.filter(t => t === 'neutral').length;
+            let team1 = 0, team2 = 0;
+            for (let i = 0; i < GRID_SIZE; i++) {
+                if (territories[i] === 1) team1++;
+                else if (territories[i] === 2) team2++;
+            }
             
             document.getElementById('team1-count').textContent = team1;
             document.getElementById('team2-count').textContent = team2;
-            document.getElementById('neutral-count').textContent = neutral;
+            document.getElementById('neutral-count').textContent = GRID_SIZE - team1 - team2;
             
-            return neutral > 0;
+            return team1 > 0 && team2 > 0;
+        }
+
+        function gameLoop() {
+            if (!isPaused && gameRunning) {
+                const hasContact = checkArmiesInContact();
+                const attackCount = hasContact ? 8 : 3;
+                
+                for (let i = 0; i < attackCount; i++) {
+                    makeAttack(1);
+                    makeAttack(2);
+                }
+                
+                // Обновляем подкрепления
+                for (let i = reinforcements.length - 1; i >= 0; i--) {
+                    reinforcements[i].time++;
+                    if (reinforcements[i].time > reinforcements[i].duration) {
+                        reinforcements.splice(i, 1);
+                    }
+                }
+                
+                if (!updateStats()) {
+                    clearInterval(gameInterval);
+                    gameRunning = false;
+                    let team1 = 0;
+                    for (let i = 0; i < GRID_SIZE; i++) {
+                        if (territories[i] === 1) team1++;
+                    }
+                    const winner = team1 > 0 ? '🔴 RED ARMY' : '🔵 BLUE ARMY';
+                    setTimeout(() => alert('⚔️ GAME OVER! ' + winner + ' WINS! ⚔️'), 500);
+                }
+            }
+            
+            renderCanvas();
         }
 
         function startAutoPlay() {
             if (gameInterval) clearInterval(gameInterval);
-            gameInterval = setInterval(() => {
-                if (!isPaused && gameRunning) {
-                    const hasContact = checkArmiesInContact();
-                    
-                    if (hasContact) {
-                        for (let i = 0; i < 8; i++) {
-                            makeAttack('team1');
-                            makeAttack('team2');
-                        }
-                    } else {
-                        for (let i = 0; i < 3; i++) {
-                            makeAttack('team1');
-                            makeAttack('team2');
-                        }
-                    }
-                    
-                    if (!updateStats()) {
-                        clearInterval(gameInterval);
-                        gameRunning = false;
-                        setTimeout(() => {
-                            const team1Count = territories.filter(t => t === 'team1').length;
-                            const winner = team1Count > 0 ? '🔴 RED ARMY' : '🔵 BLUE ARMY';
-                            alert('⚔️ GAME OVER! ' + winner + ' WINS! ⚔️');
-                        }, 500);
-                    }
-                }
-            }, gameSpeed);
+            gameInterval = setInterval(gameLoop, gameSpeed);
         }
 
         function togglePause() {
             isPaused = !isPaused;
-            if (!isPaused) gameStarted = true;
-            pauseButton.textContent = isPaused ? (gameStarted ? '▶️ RESUME' : '▶️ START') : '⏸️ PAUSE';
+            pauseButton.textContent = isPaused ? '▶️ RESUME' : '⏸️ PAUSE';
         }
 
         function speedUp() {
@@ -708,17 +510,11 @@
         function resetGame() {
             if (gameInterval) clearInterval(gameInterval);
             gameRunning = false;
-            territories = new Array(gridSize).fill('neutral');
-            territories[0] = 'team1';
-            territories[gridSize - 1] = 'team2';
             gameSpeed = 30;
-            renderGrid();
-            updateStats();
             isPaused = true;
-            gameStarted = false;
-            pauseButton.textContent = '▶️ START';
             gameRunning = true;
-            startAutoPlay();
+            pauseButton.textContent = '▶️ START';
+            initGame();
         }
 
         document.getElementById('flagModal').classList.add('show');

@@ -10,63 +10,58 @@
     <script src="https://unpkg.com/feather-icons"></script>
     <style>
         .pixel {
-            transition: fill 0.1s ease;
+            /* Removed transition for performance */
         }
-      
+     
         .pixel.conquered {
-            animation: pixel-flash 0.3s ease-out;
+            /* Removed animation for performance */
         }
-      
+     
         @keyframes pixel-flash {
-            0%, 100% {
-                filter: brightness(1);
-            }
-            50% {
-                filter: brightness(2) drop-shadow(0 0 3px #fff);
-            }
+            /* Kept but not used */
         }
-      
+     
         .country {
             stroke: #2c3e50;
             stroke-width: 0.5;
             cursor: pointer;
         }
-      
+     
         .country.neutral {
             fill: #1a2535;
         }
-      
+     
         .country.player {
             fill: #ff6b6b;
         }
-      
+     
         .country.warring {
             fill: none;
         }
-      
+     
         .country:hover {
             stroke: #fff;
             stroke-width: 2;
         }
-      
+     
         .country.target {
             stroke: #ff0000;
             stroke-width: 3;
             filter: drop-shadow(0 0 10px #ff0000);
         }
-      
+     
         .ocean {
             fill: #0a0d15;
         }
-      
+     
         .glow-text {
             text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
         }
-      
+     
         .pulse {
             animation: pulse 2s infinite;
         }
-      
+     
         @keyframes pulse {
             0% {
                 box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
@@ -91,46 +86,29 @@
             <i data-feather="play" class="inline mr-2"></i> НАЧАТЬ ИГРУ
         </button>
     </div>
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <div class="text-center mb-8">
-            <h1 class="text-4xl md:text-5xl font-bold mb-2 glow-text">🌍 Pixel Planet Conquest</h1>
-            <p class="text-gray-300">Завоюйте мир по одному пикселю за раз!</p>
-        </div>
-      
-        <div id="game-controls" class="bg-gray-800 rounded-xl border-2 border-gray-700 shadow-xl mb-8 p-6 hidden">
-            <div id="info-text" class="bg-blue-900/20 border border-blue-500 rounded-lg p-3 text-center text-blue-200 mb-4">
-                Выберите страну для начала завоевания мира! 🌍
-            </div>
-          
-            <div class="flex flex-wrap justify-center gap-3 mb-4">
-                <button id="attack-btn" onclick="attackCountryAction()" disabled class="bg-red-600 hover:bg-red-500 border-2 border-red-400 text-white px-6 py-2 rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+    <div id="world-map" class="hidden"></div>
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-gray-800 rounded-xl border-2 border-gray-700 p-6 max-w-sm w-full mx-4">
+            <h2 id="modal-title" class="text-2xl font-bold mb-4 glow-text"></h2>
+            <p id="modal-text" class="text-gray-300 mb-6"></p>
+            <div class="flex justify-end gap-3">
+                <button id="modal-reset" class="bg-purple-600 hover:bg-purple-500 border-2 border-purple-400 text-white px-4 py-2 rounded-lg font-bold transition-all" style="display: none;">
+                    <i data-feather="refresh-cw" class="inline mr-2"></i> НОВАЯ ИГРА
+                </button>
+                <button id="modal-attack" class="bg-red-600 hover:bg-red-500 border-2 border-red-400 text-white px-4 py-2 rounded-lg font-bold transition-all" style="display: none;">
                     <i data-feather="zap" class="inline mr-2"></i> АТАКОВАТЬ
                 </button>
-                <button id="cancel-btn" onclick="cancelSelection()" disabled class="bg-gray-600 hover:bg-gray-500 border-2 border-gray-400 text-white px-6 py-2 rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                    <i data-feather="x" class="inline mr-2"></i> ОТМЕНА
+                <button id="modal-close" class="bg-gray-600 hover:bg-gray-500 border-2 border-gray-400 text-white px-4 py-2 rounded-lg font-bold transition-all">
+                    <i data-feather="x" class="inline mr-2"></i> ЗАКРЫТЬ
                 </button>
             </div>
-        </div>
-      
-        <div id="world-map" class="w-full bg-gray-900 rounded-xl border-2 border-gray-700 shadow-2xl mb-8 relative overflow-hidden hidden"></div>
-      
-        <div id="bottom-buttons" class="flex flex-wrap justify-center gap-4 hidden">
-            <button onclick="resetGame()" class="bg-purple-600 hover:bg-purple-500 border-2 border-purple-400 text-white px-6 py-3 rounded-lg font-bold transition-all">
-                <i data-feather="refresh-cw" class="inline mr-2"></i> НОВАЯ ИГРА
-            </button>
-            <button onclick="toggleSpeed()" class="bg-yellow-600 hover:bg-yellow-500 border-2 border-yellow-400 text-white px-6 py-3 rounded-lg font-bold transition-all">
-                <i data-feather="clock" class="inline mr-2"></i> СКОРОСТЬ: <span id="speed-text">СРЕДНЯЯ</span>
-            </button>
-            <button onclick="resetZoom()" class="bg-blue-600 hover:bg-blue-500 border-2 border-blue-400 text-white px-6 py-3 rounded-lg font-bold transition-all">
-                <i data-feather="zoom-out" class="inline mr-2"></i> СБРОС ЗУМА
-            </button>
         </div>
     </div>
     <script>
         const width = 1360;
         const height = 600;
-        const pixelSize = 4;
-      
+        const pixelSize = 8; // Increased for better performance on mobile
+     
         let countriesData = [];
         let hoveredCountry = null;
         let targetCountry = null;
@@ -138,12 +116,12 @@
         let countryPixels = {};
         let svg, g, pixelLayer, countryLayer;
         let warInProgress = false;
-        let gameSpeed = 40;
+        let gameSpeed = 80; // Set to slower speed
         const speeds = {slow: 80, medium: 40, fast: 15};
-        let currentSpeed = 'medium';
+        let currentSpeed = 'slow';
         let idToGeoIndex = {};
         let geoNeighbors = [];
-      
+     
         const projection = d3.geoNaturalEarth1()
             .scale(width / 6.5)
             .translate([width / 2, height / 2]);
@@ -153,37 +131,38 @@
                 .append("svg")
                 .attr("viewBox", `0 0 ${width} ${height}`)
                 .attr("width", "100%")
-                .attr("height", "100%");
-              
+                .attr("height", "100%")
+                .attr("preserveAspectRatio", "xMidYMid meet");
+             
             const zoom = d3.zoom()
                 .scaleExtent([1, 8])
                 .on('zoom', zoomed);
-              
+             
             svg.call(zoom);
-              
+             
             g = svg.append("g");
-              
+             
             g.append("path")
                 .datum({type: "Sphere"})
                 .attr("class", "ocean")
                 .attr("d", path);
-              
+             
             pixelLayer = g.append("g").attr("class", "pixel-layer");
             countryLayer = g.append("g").attr("class", "country-layer");
-          
+         
             d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(function(world) {
                 const originalGeometries = world.objects.countries.geometries;
                 geoNeighbors = topojson.neighbors(originalGeometries);
                 originalGeometries.forEach((geo, i) => {
                     idToGeoIndex[geo.id] = i;
                 });
-              
+             
                 const countries = topojson.feature(world, world.objects.countries);
                 countriesData = countries.features;
-              
+             
                 // Sort countries alphabetically by name
                 countriesData.sort((a, b) => a.properties.name.localeCompare(b.properties.name));
-              
+             
                 // Populate start country select
                 const select = document.getElementById('start-country');
                 countriesData.forEach(country => {
@@ -192,12 +171,12 @@
                     option.textContent = country.properties.name;
                     select.appendChild(option);
                 });
-              
+             
                 countriesData.forEach(country => {
                     countryOwners[country.id] = 'neutral';
                     countryPixels[country.id] = createPixelsForCountry(country);
                 });
-              
+             
                 countryLayer.selectAll(".country")
                     .data(countriesData)
                     .enter()
@@ -206,27 +185,9 @@
                     .attr("d", path)
                     .attr("data-id", d => d.id)
                     .classed("neutral", true)
-                    .on("click", handleCountryClick)
-                    .on("mouseover", handleCountryHover)
-                    .append("title")
-                    .text(d => d.properties.name);
+                    .on("click", handleCountryClick);
+                    // Removed mouseover and title for minimalism
             });
-
-            adjustLayout();
-            window.addEventListener('resize', adjustLayout);
-        }
-        function adjustLayout() {
-            const isPortrait = window.innerWidth < window.innerHeight;
-            const container = document.getElementById('world-map');
-            if (isPortrait) {
-                container.style.aspectRatio = 'auto';
-                container.style.height = '60vh';
-                svg.attr('preserveAspectRatio', 'xMidYMid slice');
-            } else {
-                container.style.aspectRatio = '1360 / 600';
-                container.style.height = 'auto';
-                svg.attr('preserveAspectRatio', 'xMidYMid meet');
-            }
         }
         function zoomed(event) {
             g.attr('transform', event.transform);
@@ -241,12 +202,12 @@
         function createPixelsForCountry(country) {
             const bounds = path.bounds(country);
             const pixels = [];
-          
+         
             for (let x = Math.floor(bounds[0][0]); x < bounds[1][0]; x += pixelSize) {
                 for (let y = Math.floor(bounds[0][1]); y < bounds[1][1]; y += pixelSize) {
                     const point = [x + pixelSize/2, y + pixelSize/2];
                     const coords = projection.invert(point);
-                  
+                 
                     if (coords && d3.geoContains(country, coords)) {
                         pixels.push({
                             x: x,
@@ -257,7 +218,7 @@
                     }
                 }
             }
-          
+         
             pixels.forEach(pixel => {
                 const rect = pixelLayer.append("rect")
                     .attr("class", "pixel")
@@ -269,99 +230,72 @@
                     .attr("stroke", "none");
                 pixel.element = rect;
             });
-          
+         
             return pixels;
         }
         function handleCountryHover(event, country) {
-            if (warInProgress) return;
-          
-            hoveredCountry = country;
-            const ownerText = countryOwners[country.id] === 'player' ? 'Ваша территория' : 'Нейтральная';
-            let extra = '';
-            if (countryOwners[country.id] === 'neutral') {
-                const hasNeighbor = getPlayerCountries().some(pc => isNeighbor(pc, country));
-                extra = hasNeighbor ? ' (можно атаковать)' : ' (недоступна)';
-            }
-            updateInfoText(`Наведено: ${country.properties.name} (${ownerText}${extra})`);
-            updateButtons();
+            // Removed for minimalism
         }
-        function handleCountryClick(event, country) {
+        function handleCountryClick(event, d) {
             if (warInProgress) return;
-          
-            hoveredCountry = country;
+         
+            const country = d;
             countryLayer.selectAll(".country").classed('target', false);
-          
+         
+            let title = country.properties.name;
+            let text = '';
+            let showAttack = false;
+            let showReset = false;
+         
             if (countryOwners[country.id] === 'player') {
-                updateInfoText(`Ваша территория: ${country.properties.name}`);
+                text = 'Это ваша территория.';
             } else if (countryOwners[country.id] === 'neutral') {
                 const hasNeighbor = getPlayerCountries().some(pc => isNeighbor(pc, country));
                 if (hasNeighbor) {
                     targetCountry = country;
-                    countryLayer.select(`path[data-id="${targetCountry.id}"]`).classed('target', true);
-                    updateInfoText(`Цель: ${country.properties.name}. Нажмите "АТАКОВАТЬ" чтобы начать войну! 💥`);
+                    text = 'Хотите атаковать эту страну?';
+                    showAttack = true;
+                    // Removed adding 'target' class to avoid thick borders
                 } else {
-                    updateInfoText(`❌ ${country.properties.name} не граничит с вашими территориями!`);
+                    text = 'Эта страна не граничит с вашими территориями. Атака невозможна.';
                 }
             }
-          
-            updateButtons();
+         
+            showModal(title, text, showAttack, showReset);
         }
         function attackCountryAction() {
-            if (!targetCountry || warInProgress) return;
-          
-            startWar(targetCountry);
+            // Removed, handled in modal
         }
         function cancelSelection() {
-            if (warInProgress) return;
-          
-            if (targetCountry) {
-                countryLayer.select(`path[data-id="${targetCountry.id}"]`).classed('target', false);
-            }
-            targetCountry = null;
-            hoveredCountry = null;
-            updateInfoText('Выбор отменён. Выберите территорию заново! 🔄');
-            updateButtons();
+            // Removed, handled in modal
         }
         function updateButtons() {
-            const attackBtn = document.getElementById('attack-btn');
-            const cancelBtn = document.getElementById('cancel-btn');
-          
-            attackBtn.disabled = !targetCountry || warInProgress;
-            cancelBtn.disabled = !targetCountry || warInProgress;
-          
-            // Add pulse effect to attack button when ready
-            if (!attackBtn.disabled) {
-                attackBtn.classList.add('pulse');
-            } else {
-                attackBtn.classList.remove('pulse');
-            }
+            // Removed
         }
         function startWar(defender) {
             warInProgress = true;
-            updateButtons();
-            updateInfoText(`⚔️ ВОЙНА! Атака на ${defender.properties.name}! Захват территории квадратик за квадратиком...`);
-          
+         
             countryLayer.select(`path[data-id="${defender.id}"]`).classed('neutral', false).classed('warring', true);
             const defenderPixels = countryPixels[defender.id];
             defenderPixels.forEach(p => {
                 p.element.attr('fill', '#1a2535');
                 p.owner = 'neutral';
             });
-          
+         
             const playerCountries = getPlayerCountries();
             const borderingPlayers = playerCountries.filter(pc => isNeighbor(pc, defender));
-          
+         
             let attackerBorder = [];
             borderingPlayers.forEach(bp => {
                 attackerBorder.push(...countryPixels[bp.id]);
             });
-          
+         
             let capturedCount = 0;
             const totalPixels = defenderPixels.length;
-          
+         
             const warInterval = setInterval(() => {
                 const uncapturedPixels = defenderPixels.filter(p => p.owner === 'neutral');
-              
+             
                 if (uncapturedPixels.length === 0) {
                     clearInterval(warInterval);
                     countryOwners[defender.id] = 'player';
@@ -369,50 +303,45 @@
                     defenderPixels.forEach(p => {
                         p.element.attr('fill', 'transparent');
                     });
-                  
-                    updateInfoText(`🎉 ПОБЕДА! ${defender.properties.name} полностью захвачена! Продолжайте завоевание! 🌍`);
-                  
+                 
                     if (targetCountry) {
                         countryLayer.select(`path[data-id="${targetCountry.id}"]`).classed('target', false);
                     }
                     targetCountry = null;
                     warInProgress = false;
                     checkWinCondition();
-                    updateButtons();
                     return;
                 }
-              
-                const pixelsToCapture = Math.min(3 + borderingPlayers.length, uncapturedPixels.length); // Improved: faster with more borders
-              
+             
+                const pixelsToCapture = Math.min(3 + borderingPlayers.length, uncapturedPixels.length);
+             
                 for (let i = 0; i < pixelsToCapture; i++) {
                     let targetPixel;
-                  
+                 
                     const borderPixels = uncapturedPixels.filter(p => {
                         return attackerBorder.some(ap => {
                             const dist = Math.sqrt(Math.pow(ap.x - p.x, 2) + Math.pow(ap.y - p.y, 2));
                             return dist < pixelSize * 3;
                         });
                     });
-                  
+                 
                     if (borderPixels.length > 0) {
                         targetPixel = borderPixels[Math.floor(Math.random() * borderPixels.length)];
                     } else {
                         targetPixel = uncapturedPixels[Math.floor(Math.random() * uncapturedPixels.length)];
                     }
-                  
+                 
                     targetPixel.owner = 'player';
                     targetPixel.element
-                        .attr('fill', '#ff6b6b')
-                        .classed('conquered', true);
-                    setTimeout(() => targetPixel.element.classed('conquered', false), 300);
-                  
+                        .attr('fill', '#ff6b6b');
+                    // Removed conquered class for performance
+                 
                     attackerBorder.push(targetPixel);
                     capturedCount++;
                 }
-              
-                const progress = Math.floor((capturedCount / totalPixels) * 100);
-                updateInfoText(`⚔️ ВОЙНА! Захвачено: ${progress}%`);
-              
+             
+                // Removed progress text
+             
             }, gameSpeed);
         }
         function isNeighbor(country1, country2) {
@@ -424,40 +353,29 @@
             return countriesData.filter(c => countryOwners[c.id] === 'player');
         }
         function updateInfoText(text) {
-            document.getElementById('info-text').textContent = text;
+            // Removed
         }
         function checkWinCondition() {
             const neutralCount = Object.values(countryOwners).filter(o => o === 'neutral').length;
             if (neutralCount === 0) {
                 setTimeout(() => {
-                    updateInfoText('🏆 ПОЛНАЯ ПОБЕДА! Вы захватили все территории мира!');
-                  
+                    showModal('🏆 ПОЛНАЯ ПОБЕДА!', 'Вы захватили все территории мира!', false, true);
+                 
                     // Confetti celebration
                     const confettiSettings = { target: 'world-map', max: 200, size: 2, animate: true };
                     const confetti = new ConfettiGenerator(confettiSettings);
                     confetti.render();
-                  
+                 
                     setTimeout(() => confetti.clear(), 5000);
                 }, 500);
             }
         }
         function toggleSpeed() {
-            if (currentSpeed === 'medium') {
-                currentSpeed = 'fast';
-                gameSpeed = speeds.fast;
-            } else if (currentSpeed === 'fast') {
-                currentSpeed = 'slow';
-                gameSpeed = speeds.slow;
-            } else {
-                currentSpeed = 'medium';
-                gameSpeed = speeds.medium;
-            }
-          
-            document.getElementById('speed-text').textContent = currentSpeed === 'slow' ? 'МЕДЛЕННАЯ' : (currentSpeed === 'fast' ? 'БЫСТРАЯ' : 'СРЕДНЯЯ');
+            // Removed
         }
         function resetGame() {
             if (warInProgress) return;
-          
+         
             Object.keys(countryOwners).forEach(id => {
                 countryOwners[id] = 'neutral';
                 const pixels = countryPixels[id];
@@ -471,46 +389,72 @@
                     .classed('neutral', true)
                     .classed('target', false);
             });
-          
+         
             targetCountry = null;
             hoveredCountry = null;
-            updateButtons();
-            updateInfoText('Игра сброшена! Выберите страну для начала завоевания! 🌍');
-          
+         
             // Show start menu again
             document.getElementById('start-menu').style.display = 'flex';
-            document.getElementById('game-controls').classList.add('hidden');
             document.getElementById('world-map').classList.add('hidden');
-            document.getElementById('bottom-buttons').classList.add('hidden');
+            document.getElementById('world-map').style.position = '';
+            document.getElementById('world-map').style.inset = '';
+        }
+        function showModal(title, text, showAttack = false, showReset = false) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-text').textContent = text;
+            document.getElementById('modal-attack').style.display = showAttack ? 'inline-flex' : 'none';
+            document.getElementById('modal-reset').style.display = showReset ? 'inline-flex' : 'none';
+            document.getElementById('modal').style.display = 'flex';
+        }
+        function hideModal() {
+            document.getElementById('modal').style.display = 'none';
         }
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             initMap();
             feather.replace();
-          
+         
             // Load confetti script if needed
             if (!window.ConfettiGenerator) {
                 const script = document.createElement('script');
                 script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js';
                 document.head.appendChild(script);
             }
-          
+         
+            const modalAttack = document.getElementById('modal-attack');
+            const modalClose = document.getElementById('modal-close');
+            const modalReset = document.getElementById('modal-reset');
+         
+            modalAttack.addEventListener('click', () => {
+                if (targetCountry) {
+                    startWar(targetCountry);
+                    targetCountry = null;
+                }
+                hideModal();
+            });
+         
+            modalClose.addEventListener('click', hideModal);
+         
+            modalReset.addEventListener('click', () => {
+                resetGame();
+                hideModal();
+            });
+         
             // Start button handler
             document.getElementById('start-btn').addEventListener('click', function() {
                 const startId = document.getElementById('start-country').value;
                 if (!startId) return;
-              
+             
                 const startCountry = countriesData.find(c => c.id === startId);
                 countryOwners[startId] = 'player';
                 countryLayer.select(`path[data-id="${startId}"]`).classed('neutral', false).classed('player', true);
-              
+             
                 document.getElementById('start-menu').style.display = 'none';
-                document.getElementById('game-controls').classList.remove('hidden');
                 document.getElementById('world-map').classList.remove('hidden');
-                document.getElementById('bottom-buttons').classList.remove('hidden');
-              
-                updateInfoText(`Начали с ${startCountry.properties.name}! Кликните на соседнюю страну для атаки. 🗡️`);
-                adjustLayout();
+                document.getElementById('world-map').style.position = 'fixed';
+                document.getElementById('world-map').style.inset = '0';
+             
+                showModal('Добро пожаловать!', `Вы начали с ${startCountry.properties.name}. Кликните на страну для просмотра или атаки.`, false, false);
             });
         });
     </script>

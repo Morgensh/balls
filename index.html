@@ -1,523 +1,518 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>War for Territory - Optimized</title>
+    <title>Pixel Planet Conquest</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+    <script src="https://unpkg.com/feather-icons"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        .pixel {
+            transition: fill 0.1s ease;
         }
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
-            font-family: 'Arial', sans-serif;
-            overflow: hidden;
-            padding: 10px;
+      
+        .pixel.conquered {
+            animation: pixel-flash 0.3s ease-out;
         }
-        .container {
-            background: #0f1419;
-            border-radius: 15px;
-            padding: 15px;
-            box-shadow: 0 0 60px rgba(255, 107, 107, 0.3), 0 0 60px rgba(78, 205, 196, 0.3);
-            border: 2px solid #1a2540;
-            width: 100%;
-            max-width: 600px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
+      
+        @keyframes pixel-flash {
+            0%, 100% {
+                filter: brightness(1);
+            }
+            50% {
+                filter: brightness(2) drop-shadow(0 0 3px #fff);
+            }
         }
-        h1 {
-            text-align: center;
-            color: #fff;
-            text-shadow: 0 0 20px rgba(255, 107, 107, 0.8), 0 0 10px rgba(78, 205, 196, 0.8);
-            font-size: clamp(20px, 5vw, 28px);
-            letter-spacing: 2px;
-        }
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-        }
-        .stat-box {
-            padding: 10px 12px;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: bold;
-            border: 2px solid;
-            font-size: clamp(12px, 3vw, 14px);
-            min-height: 50px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        .stat-box.team1 {
-            background: rgba(255, 107, 107, 0.15);
-            border-color: #ff6b6b;
-            color: #ff9999;
-            text-shadow: 0 0 10px rgba(255, 107, 107, 0.5);
-        }
-        .stat-box.team2 {
-            background: rgba(78, 205, 196, 0.15);
-            border-color: #4ecdc4;
-            color: #7dd8d3;
-            text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
-        }
-        .stat-box.neutral {
-            background: rgba(200, 200, 200, 0.1);
-            border-color: #666;
-            color: #aaa;
-        }
-        .canvas-wrapper {
-            position: relative;
-            width: 100%;
-            aspect-ratio: 1;
-            background: #0a0d15;
-            border: 2px solid #1a2540;
-            border-radius: 8px;
-            box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.8);
-            overflow: hidden;
-        }
-        #gameCanvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-        .buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-        button {
-            padding: 12px 18px;
-            border: 2px solid #4ecdc4;
-            border-radius: 8px;
-            font-size: clamp(12px, 3vw, 14px);
+      
+        .country {
+            stroke: #2c3e50;
+            stroke-width: 0.5;
             cursor: pointer;
-            font-weight: bold;
-            background: #16213e;
-            color: #4ecdc4;
-            text-shadow: 0 0 5px rgba(78, 205, 196, 0.5);
-            white-space: nowrap;
-            flex: 1;
-            min-width: 100px;
-            transition: all 0.3s ease;
         }
-        button:hover {
-            background: #4ecdc4;
-            color: #0f1419;
-            box-shadow: 0 0 20px rgba(78, 205, 196, 0.6);
-            transform: scale(1.05);
+      
+        .country.neutral {
+            fill: #1a2535;
         }
-        button:active {
-            transform: scale(0.95);
+      
+        .country.player {
+            fill: #ff6b6b;
         }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+      
+        .country.warring {
+            fill: none;
         }
-        .modal.show {
-            display: flex;
+      
+        .country:hover {
+            stroke: #fff;
+            stroke-width: 2;
         }
-        .modal-content {
-            background: #0f1419;
-            padding: 30px;
-            border-radius: 15px;
-            border: 2px solid #4ecdc4;
-            box-shadow: 0 0 40px rgba(78, 205, 196, 0.4);
-            max-width: 500px;
-            width: 100%;
+      
+        .country.target {
+            stroke: #ff0000;
+            stroke-width: 3;
+            filter: drop-shadow(0 0 10px #ff0000);
         }
-        .modal-content h2 {
-            color: #4ecdc4;
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: clamp(18px, 5vw, 24px);
+      
+        .ocean {
+            fill: #0a0d15;
         }
-        .flag-preview {
-            display: flex;
-            gap: 15px;
-            margin: 20px 0;
+      
+        .glow-text {
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
         }
-        .preview-box {
-            flex: 1;
-            text-align: center;
+      
+        .pulse {
+            animation: pulse 2s infinite;
         }
-        .preview-box p {
-            color: #aaa;
-            font-size: 12px;
-            margin-bottom: 8px;
-        }
-        .preview-box img {
-            width: 80px;
-            height: 80px;
-            border: 2px solid #4ecdc4;
-            border-radius: 8px;
-            object-fit: cover;
-            background: #1a2535;
-            margin-bottom: 10px;
-        }
-        .preview-box input[type="file"] {
-            font-size: 12px;
-            color: #4ecdc4;
-            width: 100%;
-        }
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .modal-buttons button {
-            flex: 1;
-            padding: 12px;
+      
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(255, 107, 107, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+            }
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>⚔️ WAR FOR TERRITORY ⚔️</h1>
-        
-        <div class="stats">
-            <div class="stat-box team1">
-                🔴 <span id="team1-count">0</span>
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen text-white">
+    <div id="start-menu" class="fixed inset-0 bg-gradient-to-br from-gray-900 to-gray-800 flex flex-col items-center justify-center z-50">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6 glow-text">🌍 Pixel Planet Conquest</h1>
+        <p class="text-gray-300 mb-4 text-center max-w-md">Завоюйте мир по одному пикселю за раз! Выберите стартовую страну и начните завоевание.</p>
+        <select id="start-country" class="bg-gray-700 border-2 border-gray-500 text-white px-4 py-2 rounded-lg mb-4 w-64">
+            <!-- Options will be populated dynamically -->
+        </select>
+        <button id="start-btn" class="bg-green-600 hover:bg-green-500 border-2 border-green-400 text-white px-6 py-3 rounded-lg font-bold transition-all">
+            <i data-feather="play" class="inline mr-2"></i> НАЧАТЬ ИГРУ
+        </button>
+    </div>
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <div class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold mb-2 glow-text">🌍 Pixel Planet Conquest</h1>
+            <p class="text-gray-300">Завоюйте мир по одному пикселю за раз!</p>
+        </div>
+      
+        <div id="game-controls" class="bg-gray-800 rounded-xl border-2 border-gray-700 shadow-xl mb-8 p-6 hidden">
+            <div id="info-text" class="bg-blue-900/20 border border-blue-500 rounded-lg p-3 text-center text-blue-200 mb-4">
+                Выберите страну для начала завоевания мира! 🌍
             </div>
-            <div class="stat-box neutral">
-                ⚪ <span id="neutral-count">1600</span>
-            </div>
-            <div class="stat-box team2">
-                🔵 <span id="team2-count">0</span>
+          
+            <div class="flex flex-wrap justify-center gap-3 mb-4">
+                <button id="attack-btn" onclick="attackCountryAction()" disabled class="bg-red-600 hover:bg-red-500 border-2 border-red-400 text-white px-6 py-2 rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i data-feather="zap" class="inline mr-2"></i> АТАКОВАТЬ
+                </button>
+                <button id="cancel-btn" onclick="cancelSelection()" disabled class="bg-gray-600 hover:bg-gray-500 border-2 border-gray-400 text-white px-6 py-2 rounded-lg font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i data-feather="x" class="inline mr-2"></i> ОТМЕНА
+                </button>
             </div>
         </div>
-
-        <div class="canvas-wrapper">
-            <canvas id="gameCanvas" width="400" height="400"></canvas>
-        </div>
-
-        <div class="buttons">
-            <button onclick="resetGame()">🔄 RESET</button>
-            <button onclick="togglePause()">▶️ START</button>
-            <button onclick="speedUp()">⚡ SPEED</button>
+      
+        <div id="world-map" class="w-full bg-gray-900 rounded-xl border-2 border-gray-700 shadow-2xl mb-8 relative overflow-hidden hidden"></div>
+      
+        <div id="bottom-buttons" class="flex flex-wrap justify-center gap-4 hidden">
+            <button onclick="resetGame()" class="bg-purple-600 hover:bg-purple-500 border-2 border-purple-400 text-white px-6 py-3 rounded-lg font-bold transition-all">
+                <i data-feather="refresh-cw" class="inline mr-2"></i> НОВАЯ ИГРА
+            </button>
+            <button onclick="toggleSpeed()" class="bg-yellow-600 hover:bg-yellow-500 border-2 border-yellow-400 text-white px-6 py-3 rounded-lg font-bold transition-all">
+                <i data-feather="clock" class="inline mr-2"></i> СКОРОСТЬ: <span id="speed-text">СРЕДНЯЯ</span>
+            </button>
+            <button onclick="resetZoom()" class="bg-blue-600 hover:bg-blue-500 border-2 border-blue-400 text-white px-6 py-3 rounded-lg font-bold transition-all">
+                <i data-feather="zoom-out" class="inline mr-2"></i> СБРОС ЗУМА
+            </button>
         </div>
     </div>
-
-    <div id="flagModal" class="modal">
-        <div class="modal-content">
-            <h2>🚩 Select Flags for Armies</h2>
-            
-            <div class="flag-preview">
-                <div class="preview-box">
-                    <p>🔴 Red Army</p>
-                    <img id="team1Preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%23ff6b6b' width='100' height='100'/%3E%3C/svg%3E" alt="Team 1">
-                    <input type="file" id="team1File" accept="image/*">
-                </div>
-                <div class="preview-box">
-                    <p>🔵 Blue Army</p>
-                    <img id="team2Preview" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='%234ecdc4' width='100' height='100'/%3E%3C/svg%3E" alt="Team 2">
-                    <input type="file" id="team2File" accept="image/*">
-                </div>
-            </div>
-
-            <div class="modal-buttons">
-                <button onclick="startGameWithFlags()">✓ START GAME</button>
-            </div>
-        </div>
-    </div>
-
     <script>
-        const GRID_SIZE = 1600;
-        const GRID_COLS = 40;
-        const CELL_SIZE = 10;
-        
-        let territories = new Uint8Array(GRID_SIZE);
-        let isPaused = true;
-        let gameRunning = true;
-        let gameSpeed = 30;
-        let gameInterval = null;
-        let animationId = null;
-        let team1Flag = null;
-        let team2Flag = null;
-        let reinforcements = [];
-        let team1FlagImg = null;
-        let team2FlagImg = null;
-
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d', { alpha: false });
-        const pauseButton = document.querySelector('button:nth-of-type(2)');
-
-        const COLORS = {
-            0: '#1a2535',
-            1: '#ff6b6b',
-            2: '#4ecdc4'
-        };
-
-        document.getElementById('team1File').addEventListener('change', function(e) {
-            if (e.target.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    team1Flag = event.target.result;
-                    team1FlagImg = new Image();
-                    team1FlagImg.src = team1Flag;
-                    document.getElementById('team1Preview').src = team1Flag;
-                };
-                reader.readAsDataURL(e.target.files[0]);
-            }
-        });
-
-        document.getElementById('team2File').addEventListener('change', function(e) {
-            if (e.target.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    team2Flag = event.target.result;
-                    team2FlagImg = new Image();
-                    team2FlagImg.src = team2Flag;
-                    document.getElementById('team2Preview').src = team2Flag;
-                };
-                reader.readAsDataURL(e.target.files[0]);
-            }
-        });
-
-        function startGameWithFlags() {
-            if (!team1Flag || !team2Flag) {
-                alert('Select flags for both armies!');
-                return;
-            }
-            document.getElementById('flagModal').classList.remove('show');
-            initGame();
-        }
-
-        function initGame() {
-            territories.fill(0);
-            territories[0] = 1;
-            territories[GRID_SIZE - 1] = 2;
-            reinforcements = [];
-            renderCanvas();
-            updateStats();
-            startAutoPlay();
-        }
-
-        function drawFlag(x, y, flag) {
-            if (!flag) return;
-            const img = new Image();
-            img.onload = function() {
-                ctx.drawImage(img, x - 5, y - 5, 10, 10);
-            };
-            img.src = flag;
-        }
-
-        function renderCanvas() {
-            ctx.fillStyle = COLORS[0];
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Рисуем территории
-            for (let i = 0; i < GRID_SIZE; i++) {
-                const team = territories[i];
-                if (team > 0) {
-                    const row = Math.floor(i / GRID_COLS);
-                    const col = i % GRID_COLS;
-                    const x = col * CELL_SIZE;
-                    const y = row * CELL_SIZE;
-                    
-                    ctx.fillStyle = COLORS[team];
-                    ctx.fillRect(x, y, CELL_SIZE, CELL_SIZE);
-                }
-            }
-
-            // Рисуем флаги в углах
-            if (team1FlagImg && team1FlagImg.complete) {
-                ctx.drawImage(team1FlagImg, 0, 0, 40, 40);
-            }
-            if (team2FlagImg && team2FlagImg.complete) {
-                ctx.drawImage(team2FlagImg, canvas.width - 40, canvas.height - 40, 40, 40);
-            }
-
-            // Рисуем подкрепления
-            for (let r of reinforcements) {
-                const progress = r.time / r.duration;
-                const startX = r.startX;
-                const startY = r.startY;
-                const endX = r.endX;
-                const endY = r.endY;
-                
-                const x = startX + (endX - startX) * progress;
-                const y = startY + (endY - startY) * progress;
-                
-                const size = 3 + Math.sin(r.time * 0.3) * 1;
-                ctx.fillStyle = r.team === 1 ? 'rgba(255, 107, 107, 0.8)' : 'rgba(78, 205, 196, 0.8)';
-                ctx.beginPath();
-                ctx.arc(x, y, size, 0, Math.PI * 2);
-                ctx.fill();
-                
-                // Свечение
-                ctx.strokeStyle = r.team === 1 ? 'rgba(255, 107, 107, 0.4)' : 'rgba(78, 205, 196, 0.4)';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.arc(x, y, size + 2, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-        }
-
-        function getNeighbors(index) {
-            const neighbors = [];
-            const col = index % GRID_COLS;
-            const row = Math.floor(index / GRID_COLS);
-            
-            for (let dy = -1; dy <= 1; dy++) {
-                for (let dx = -1; dx <= 1; dx++) {
-                    if (dx === 0 && dy === 0) continue;
-                    const newRow = row + dy;
-                    const newCol = col + dx;
-                    if (newRow >= 0 && newRow < GRID_COLS && newCol >= 0 && newCol < GRID_COLS) {
-                        neighbors.push(newRow * GRID_COLS + newCol);
-                    }
-                }
-            }
-            return neighbors;
-        }
-
-        function makeAttack(team) {
-            const ownTerritories = [];
-            for (let i = 0; i < GRID_SIZE; i++) {
-                if (territories[i] === team) {
-                    ownTerritories.push(i);
-                }
-            }
-            
-            if (ownTerritories.length === 0) return false;
-            
-            const randomOwn = ownTerritories[Math.floor(Math.random() * ownTerritories.length)];
-            const neighbors = getNeighbors(randomOwn);
-            
-            const targets = neighbors.filter(n => territories[n] !== team);
-            if (targets.length === 0) return false;
-            
-            const target = targets[Math.floor(Math.random() * targets.length)];
-            if (territories[target] !== team) {
-                territories[target] = team;
-                
-                // Создаем анимацию подкрепления
-                const startRow = Math.floor(randomOwn / GRID_COLS);
-                const startCol = randomOwn % GRID_COLS;
-                const targetRow = Math.floor(target / GRID_COLS);
-                const targetCol = target % GRID_COLS;
-                
-                reinforcements.push({
-                    startX: startCol * CELL_SIZE + CELL_SIZE / 2,
-                    startY: startRow * CELL_SIZE + CELL_SIZE / 2,
-                    endX: targetCol * CELL_SIZE + CELL_SIZE / 2,
-                    endY: targetRow * CELL_SIZE + CELL_SIZE / 2,
-                    team: team,
-                    time: 0,
-                    duration: 15
+        const width = 1360;
+        const height = 600;
+        const pixelSize = 4;
+      
+        let countriesData = [];
+        let hoveredCountry = null;
+        let targetCountry = null;
+        let countryOwners = {};
+        let countryPixels = {};
+        let svg, g, pixelLayer, countryLayer;
+        let warInProgress = false;
+        let gameSpeed = 40;
+        const speeds = {slow: 80, medium: 40, fast: 15};
+        let currentSpeed = 'medium';
+        let idToGeoIndex = {};
+        let geoNeighbors = [];
+      
+        const projection = d3.geoNaturalEarth1()
+            .scale(width / 6.5)
+            .translate([width / 2, height / 2]);
+        const path = d3.geoPath().projection(projection);
+        function initMap() {
+            svg = d3.select("#world-map")
+                .append("svg")
+                .attr("viewBox", `0 0 ${width} ${height}`)
+                .attr("width", "100%")
+                .attr("height", "100%");
+              
+            const zoom = d3.zoom()
+                .scaleExtent([1, 8])
+                .on('zoom', zoomed);
+              
+            svg.call(zoom);
+              
+            g = svg.append("g");
+              
+            g.append("path")
+                .datum({type: "Sphere"})
+                .attr("class", "ocean")
+                .attr("d", path);
+              
+            pixelLayer = g.append("g").attr("class", "pixel-layer");
+            countryLayer = g.append("g").attr("class", "country-layer");
+          
+            d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(function(world) {
+                const originalGeometries = world.objects.countries.geometries;
+                geoNeighbors = topojson.neighbors(originalGeometries);
+                originalGeometries.forEach((geo, i) => {
+                    idToGeoIndex[geo.id] = i;
                 });
-                
-                return true;
-            }
-            return false;
-        }
+              
+                const countries = topojson.feature(world, world.objects.countries);
+                countriesData = countries.features;
+              
+                // Sort countries alphabetically by name
+                countriesData.sort((a, b) => a.properties.name.localeCompare(b.properties.name));
+              
+                // Populate start country select
+                const select = document.getElementById('start-country');
+                countriesData.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country.id;
+                    option.textContent = country.properties.name;
+                    select.appendChild(option);
+                });
+              
+                countriesData.forEach(country => {
+                    countryOwners[country.id] = 'neutral';
+                    countryPixels[country.id] = createPixelsForCountry(country);
+                });
+              
+                countryLayer.selectAll(".country")
+                    .data(countriesData)
+                    .enter()
+                    .append("path")
+                    .attr("class", "country")
+                    .attr("d", path)
+                    .attr("data-id", d => d.id)
+                    .classed("neutral", true)
+                    .on("click", handleCountryClick)
+                    .on("mouseover", handleCountryHover)
+                    .append("title")
+                    .text(d => d.properties.name);
+            });
 
-        function checkArmiesInContact() {
-            for (let i = 0; i < GRID_SIZE; i++) {
-                if (territories[i] === 1) {
-                    const neighbors = getNeighbors(i);
-                    if (neighbors.some(n => territories[n] === 2)) {
-                        return true;
+            adjustLayout();
+            window.addEventListener('resize', adjustLayout);
+        }
+        function adjustLayout() {
+            const isPortrait = window.innerWidth < window.innerHeight;
+            const container = document.getElementById('world-map');
+            if (isPortrait) {
+                container.style.aspectRatio = 'auto';
+                container.style.height = '60vh';
+                svg.attr('preserveAspectRatio', 'xMidYMid slice');
+            } else {
+                container.style.aspectRatio = '1360 / 600';
+                container.style.height = 'auto';
+                svg.attr('preserveAspectRatio', 'xMidYMid meet');
+            }
+        }
+        function zoomed(event) {
+            g.attr('transform', event.transform);
+        }
+        function resetZoom() {
+            svg.transition().duration(750).call(
+                zoom.transform,
+                d3.zoomIdentity,
+                d3.zoomTransform(svg.node()).invert([width / 2, height / 2])
+            );
+        }
+        function createPixelsForCountry(country) {
+            const bounds = path.bounds(country);
+            const pixels = [];
+          
+            for (let x = Math.floor(bounds[0][0]); x < bounds[1][0]; x += pixelSize) {
+                for (let y = Math.floor(bounds[0][1]); y < bounds[1][1]; y += pixelSize) {
+                    const point = [x + pixelSize/2, y + pixelSize/2];
+                    const coords = projection.invert(point);
+                  
+                    if (coords && d3.geoContains(country, coords)) {
+                        pixels.push({
+                            x: x,
+                            y: y,
+                            owner: 'neutral',
+                            element: null
+                        });
                     }
                 }
             }
-            return false;
+          
+            pixels.forEach(pixel => {
+                const rect = pixelLayer.append("rect")
+                    .attr("class", "pixel")
+                    .attr("x", pixel.x)
+                    .attr("y", pixel.y)
+                    .attr("width", pixelSize)
+                    .attr("height", pixelSize)
+                    .attr("fill", "transparent")
+                    .attr("stroke", "none");
+                pixel.element = rect;
+            });
+          
+            return pixels;
         }
-
-        function updateStats() {
-            let team1 = 0, team2 = 0;
-            for (let i = 0; i < GRID_SIZE; i++) {
-                if (territories[i] === 1) team1++;
-                else if (territories[i] === 2) team2++;
+        function handleCountryHover(event, country) {
+            if (warInProgress) return;
+          
+            hoveredCountry = country;
+            const ownerText = countryOwners[country.id] === 'player' ? 'Ваша территория' : 'Нейтральная';
+            let extra = '';
+            if (countryOwners[country.id] === 'neutral') {
+                const hasNeighbor = getPlayerCountries().some(pc => isNeighbor(pc, country));
+                extra = hasNeighbor ? ' (можно атаковать)' : ' (недоступна)';
             }
-            
-            document.getElementById('team1-count').textContent = team1;
-            document.getElementById('team2-count').textContent = team2;
-            document.getElementById('neutral-count').textContent = GRID_SIZE - team1 - team2;
-            
-            return team1 > 0 && team2 > 0;
+            updateInfoText(`Наведено: ${country.properties.name} (${ownerText}${extra})`);
+            updateButtons();
         }
-
-        function gameLoop() {
-            if (!isPaused && gameRunning) {
-                const hasContact = checkArmiesInContact();
-                const attackCount = hasContact ? 8 : 3;
-                
-                for (let i = 0; i < attackCount; i++) {
-                    makeAttack(1);
-                    makeAttack(2);
+        function handleCountryClick(event, country) {
+            if (warInProgress) return;
+          
+            hoveredCountry = country;
+            countryLayer.selectAll(".country").classed('target', false);
+          
+            if (countryOwners[country.id] === 'player') {
+                updateInfoText(`Ваша территория: ${country.properties.name}`);
+            } else if (countryOwners[country.id] === 'neutral') {
+                const hasNeighbor = getPlayerCountries().some(pc => isNeighbor(pc, country));
+                if (hasNeighbor) {
+                    targetCountry = country;
+                    countryLayer.select(`path[data-id="${targetCountry.id}"]`).classed('target', true);
+                    updateInfoText(`Цель: ${country.properties.name}. Нажмите "АТАКОВАТЬ" чтобы начать войну! 💥`);
+                } else {
+                    updateInfoText(`❌ ${country.properties.name} не граничит с вашими территориями!`);
                 }
-                
-                // Обновляем подкрепления
-                for (let i = reinforcements.length - 1; i >= 0; i--) {
-                    reinforcements[i].time++;
-                    if (reinforcements[i].time > reinforcements[i].duration) {
-                        reinforcements.splice(i, 1);
+            }
+          
+            updateButtons();
+        }
+        function attackCountryAction() {
+            if (!targetCountry || warInProgress) return;
+          
+            startWar(targetCountry);
+        }
+        function cancelSelection() {
+            if (warInProgress) return;
+          
+            if (targetCountry) {
+                countryLayer.select(`path[data-id="${targetCountry.id}"]`).classed('target', false);
+            }
+            targetCountry = null;
+            hoveredCountry = null;
+            updateInfoText('Выбор отменён. Выберите территорию заново! 🔄');
+            updateButtons();
+        }
+        function updateButtons() {
+            const attackBtn = document.getElementById('attack-btn');
+            const cancelBtn = document.getElementById('cancel-btn');
+          
+            attackBtn.disabled = !targetCountry || warInProgress;
+            cancelBtn.disabled = !targetCountry || warInProgress;
+          
+            // Add pulse effect to attack button when ready
+            if (!attackBtn.disabled) {
+                attackBtn.classList.add('pulse');
+            } else {
+                attackBtn.classList.remove('pulse');
+            }
+        }
+        function startWar(defender) {
+            warInProgress = true;
+            updateButtons();
+            updateInfoText(`⚔️ ВОЙНА! Атака на ${defender.properties.name}! Захват территории квадратик за квадратиком...`);
+          
+            countryLayer.select(`path[data-id="${defender.id}"]`).classed('neutral', false).classed('warring', true);
+            const defenderPixels = countryPixels[defender.id];
+            defenderPixels.forEach(p => {
+                p.element.attr('fill', '#1a2535');
+                p.owner = 'neutral';
+            });
+          
+            const playerCountries = getPlayerCountries();
+            const borderingPlayers = playerCountries.filter(pc => isNeighbor(pc, defender));
+          
+            let attackerBorder = [];
+            borderingPlayers.forEach(bp => {
+                attackerBorder.push(...countryPixels[bp.id]);
+            });
+          
+            let capturedCount = 0;
+            const totalPixels = defenderPixels.length;
+          
+            const warInterval = setInterval(() => {
+                const uncapturedPixels = defenderPixels.filter(p => p.owner === 'neutral');
+              
+                if (uncapturedPixels.length === 0) {
+                    clearInterval(warInterval);
+                    countryOwners[defender.id] = 'player';
+                    countryLayer.select(`path[data-id="${defender.id}"]`).classed('warring', false).classed('player', true);
+                    defenderPixels.forEach(p => {
+                        p.element.attr('fill', 'transparent');
+                    });
+                  
+                    updateInfoText(`🎉 ПОБЕДА! ${defender.properties.name} полностью захвачена! Продолжайте завоевание! 🌍`);
+                  
+                    if (targetCountry) {
+                        countryLayer.select(`path[data-id="${targetCountry.id}"]`).classed('target', false);
                     }
+                    targetCountry = null;
+                    warInProgress = false;
+                    checkWinCondition();
+                    updateButtons();
+                    return;
                 }
-                
-                if (!updateStats()) {
-                    clearInterval(gameInterval);
-                    gameRunning = false;
-                    let team1 = 0;
-                    for (let i = 0; i < GRID_SIZE; i++) {
-                        if (territories[i] === 1) team1++;
+              
+                const pixelsToCapture = Math.min(3 + borderingPlayers.length, uncapturedPixels.length); // Improved: faster with more borders
+              
+                for (let i = 0; i < pixelsToCapture; i++) {
+                    let targetPixel;
+                  
+                    const borderPixels = uncapturedPixels.filter(p => {
+                        return attackerBorder.some(ap => {
+                            const dist = Math.sqrt(Math.pow(ap.x - p.x, 2) + Math.pow(ap.y - p.y, 2));
+                            return dist < pixelSize * 3;
+                        });
+                    });
+                  
+                    if (borderPixels.length > 0) {
+                        targetPixel = borderPixels[Math.floor(Math.random() * borderPixels.length)];
+                    } else {
+                        targetPixel = uncapturedPixels[Math.floor(Math.random() * uncapturedPixels.length)];
                     }
-                    const winner = team1 > 0 ? '🔴 RED ARMY' : '🔵 BLUE ARMY';
-                    setTimeout(() => alert('⚔️ GAME OVER! ' + winner + ' WINS! ⚔️'), 500);
+                  
+                    targetPixel.owner = 'player';
+                    targetPixel.element
+                        .attr('fill', '#ff6b6b')
+                        .classed('conquered', true);
+                    setTimeout(() => targetPixel.element.classed('conquered', false), 300);
+                  
+                    attackerBorder.push(targetPixel);
+                    capturedCount++;
                 }
+              
+                const progress = Math.floor((capturedCount / totalPixels) * 100);
+                updateInfoText(`⚔️ ВОЙНА! Захвачено: ${progress}%`);
+              
+            }, gameSpeed);
+        }
+        function isNeighbor(country1, country2) {
+            const index1 = idToGeoIndex[country1.id];
+            const index2 = idToGeoIndex[country2.id];
+            return geoNeighbors[index1].includes(index2);
+        }
+        function getPlayerCountries() {
+            return countriesData.filter(c => countryOwners[c.id] === 'player');
+        }
+        function updateInfoText(text) {
+            document.getElementById('info-text').textContent = text;
+        }
+        function checkWinCondition() {
+            const neutralCount = Object.values(countryOwners).filter(o => o === 'neutral').length;
+            if (neutralCount === 0) {
+                setTimeout(() => {
+                    updateInfoText('🏆 ПОЛНАЯ ПОБЕДА! Вы захватили все территории мира!');
+                  
+                    // Confetti celebration
+                    const confettiSettings = { target: 'world-map', max: 200, size: 2, animate: true };
+                    const confetti = new ConfettiGenerator(confettiSettings);
+                    confetti.render();
+                  
+                    setTimeout(() => confetti.clear(), 5000);
+                }, 500);
             }
-            
-            renderCanvas();
         }
-
-        function startAutoPlay() {
-            if (gameInterval) clearInterval(gameInterval);
-            gameInterval = setInterval(gameLoop, gameSpeed);
-        }
-
-        function togglePause() {
-            isPaused = !isPaused;
-            pauseButton.textContent = isPaused ? '▶️ RESUME' : '⏸️ PAUSE';
-        }
-
-        function speedUp() {
-            gameSpeed = Math.max(5, gameSpeed - 10);
-            if (gameInterval) {
-                clearInterval(gameInterval);
-                startAutoPlay();
+        function toggleSpeed() {
+            if (currentSpeed === 'medium') {
+                currentSpeed = 'fast';
+                gameSpeed = speeds.fast;
+            } else if (currentSpeed === 'fast') {
+                currentSpeed = 'slow';
+                gameSpeed = speeds.slow;
+            } else {
+                currentSpeed = 'medium';
+                gameSpeed = speeds.medium;
             }
+          
+            document.getElementById('speed-text').textContent = currentSpeed === 'slow' ? 'МЕДЛЕННАЯ' : (currentSpeed === 'fast' ? 'БЫСТРАЯ' : 'СРЕДНЯЯ');
         }
-
         function resetGame() {
-            if (gameInterval) clearInterval(gameInterval);
-            gameRunning = false;
-            gameSpeed = 30;
-            isPaused = true;
-            gameRunning = true;
-            pauseButton.textContent = '▶️ START';
-            initGame();
+            if (warInProgress) return;
+          
+            Object.keys(countryOwners).forEach(id => {
+                countryOwners[id] = 'neutral';
+                const pixels = countryPixels[id];
+                pixels.forEach(pixel => {
+                    pixel.owner = 'neutral';
+                    pixel.element.attr('fill', 'transparent');
+                });
+                countryLayer.select(`path[data-id="${id}"]`)
+                    .classed('player', false)
+                    .classed('warring', false)
+                    .classed('neutral', true)
+                    .classed('target', false);
+            });
+          
+            targetCountry = null;
+            hoveredCountry = null;
+            updateButtons();
+            updateInfoText('Игра сброшена! Выберите страну для начала завоевания! 🌍');
+          
+            // Show start menu again
+            document.getElementById('start-menu').style.display = 'flex';
+            document.getElementById('game-controls').classList.add('hidden');
+            document.getElementById('world-map').classList.add('hidden');
+            document.getElementById('bottom-buttons').classList.add('hidden');
         }
-
-        document.getElementById('flagModal').classList.add('show');
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            initMap();
+            feather.replace();
+          
+            // Load confetti script if needed
+            if (!window.ConfettiGenerator) {
+                const script = document.createElement('script');
+                script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js';
+                document.head.appendChild(script);
+            }
+          
+            // Start button handler
+            document.getElementById('start-btn').addEventListener('click', function() {
+                const startId = document.getElementById('start-country').value;
+                if (!startId) return;
+              
+                const startCountry = countriesData.find(c => c.id === startId);
+                countryOwners[startId] = 'player';
+                countryLayer.select(`path[data-id="${startId}"]`).classed('neutral', false).classed('player', true);
+              
+                document.getElementById('start-menu').style.display = 'none';
+                document.getElementById('game-controls').classList.remove('hidden');
+                document.getElementById('world-map').classList.remove('hidden');
+                document.getElementById('bottom-buttons').classList.remove('hidden');
+              
+                updateInfoText(`Начали с ${startCountry.properties.name}! Кликните на соседнюю страну для атаки. 🗡️`);
+                adjustLayout();
+            });
+        });
     </script>
 </body>
 </html>

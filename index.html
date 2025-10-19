@@ -2,461 +2,657 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pixel Planet Conquest</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
-    <script src="https://unpkg.com/feather-icons"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title></title>
     <style>
-        .pixel {
-            /* Removed transition for performance */
+        body {
+            margin: 0;
+            padding: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+            box-sizing: border-box;
         }
-     
-        .pixel.conquered {
-            /* Removed animation for performance */
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            box-sizing: border-box;
         }
-     
-        @keyframes pixel-flash {
-            /* Kept but not used */
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            flex-wrap: wrap;
+            gap: 10px;
         }
-     
-        .country {
-            stroke: #2c3e50;
-            stroke-width: 0.5;
+
+        .player {
+            padding: 8px 15px;
+            border-radius: 8px;
+            min-width: 100px;
+        }
+
+        .player1 {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .player2 {
+            background: #4CAF50;
+            color: white;
+        }
+
+        canvas {
+            border: 3px solid #333;
+            border-radius: 10px;
+            display: block;
+            background: #f8f9fa;
+            margin: 15px auto;
+            max-width: 100%;
+            max-height: 100%;
+            touch-action: none;
+            image-rendering: optimizeQuality;
+        }
+
+        .message {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            min-height: 25px;
+            margin: 10px 0;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            border-radius: 8px;
             cursor: pointer;
+            margin: 5px;
+            touch-action: manipulation;
         }
-     
-        .country.neutral {
-            fill: #1a2535;
+
+        button:hover {
+            background: #764ba2;
         }
-     
-        .country.player {
-            fill: #ff6b6b;
+
+        #settingsBtn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1001;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            opacity: 0.3;
+            transition: opacity 0.2s;
         }
-     
-        .country.warring {
-            fill: none;
+
+        #settingsBtn:hover {
+            opacity: 0.5;
         }
-     
-        .country:hover {
-            stroke: #fff;
-            stroke-width: 2;
+
+        #settingsModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
-     
-        .country.target {
-            stroke: #ff0000;
-            stroke-width: 3;
-            filter: drop-shadow(0 0 10px #ff0000);
+
+        #settingsContent {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: left;
+            max-width: 90%;
+            width: 350px;
+            box-sizing: border-box;
         }
-     
-        .ocean {
-            fill: #0a0d15;
+
+        #settingsContent label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
         }
-     
-        .glow-text {
-            text-shadow: 0 0 10px rgba(255, 107, 107, 0.8);
+
+        #settingsContent input {
+            width: 100%;
+            padding: 5px;
+            margin-top: 3px;
+            box-sizing: border-box;
+            font-size: 14px;
         }
-     
-        .pulse {
-            animation: pulse 2s infinite;
+
+        #settingsContent button {
+            margin-right: 8px;
         }
-     
-        @keyframes pulse {
-            0% {
-                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7);
+
+        @media (max-width: 480px) {
+            body {
+                padding: 5px;
             }
-            70% {
-                box-shadow: 0 0 0 10px rgba(255, 107, 107, 0);
+            .container {
+                padding: 10px;
             }
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 107, 107, 0);
+            .stats {
+                font-size: 14px;
+                flex-direction: column;
+                align-items: center;
+            }
+            .player {
+                width: 100%;
+                text-align: center;
+            }
+            canvas {
+                width: 100%;
+                height: auto;
+            }
+            button {
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+            #settingsBtn {
+                top: 5px;
+                right: 5px;
+                width: 35px;
+                height: 35px;
+                opacity: 0.3;
+            }
+            #settingsBtn:hover {
+                opacity: 0.5;
+            }
+            #settingsContent {
+                width: 95%;
+                padding: 10px;
             }
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-gray-900 to-gray-800 min-h-screen text-white">
-    <div id="start-menu" class="fixed inset-0 bg-gradient-to-br from-gray-900 to-gray-800 flex flex-col items-center justify-center z-50">
-        <h1 class="text-4xl md:text-5xl font-bold mb-6 glow-text">🌍 Pixel Planet Conquest</h1>
-        <p class="text-gray-300 mb-4 text-center max-w-md">Завоюйте мир по одному пикселю за раз! Выберите стартовую страну и начните завоевание.</p>
-        <select id="start-country" class="bg-gray-700 border-2 border-gray-500 text-white px-4 py-2 rounded-lg mb-4 w-64">
-            <!-- Options will be populated dynamically -->
-        </select>
-        <button id="start-btn" class="bg-green-600 hover:bg-green-500 border-2 border-green-400 text-white px-6 py-3 rounded-lg font-bold transition-all">
-            <i data-feather="play" class="inline mr-2"></i> НАЧАТЬ ИГРУ
-        </button>
+<body>
+    <button id="settingsBtn"></button>
+    <div class="container">
+        <div class="stats">
+            <div class="player player1">🔴 <span id="name1">Ball 1</span>: ❤️ <span id="hp1">2</span></div>
+            <div class="player player2">🟢 <span id="name2">Ball 2</span>: ❤️ <span id="hp2">2</span></div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div class="message" id="message"></div>
+        <button id="newGameBtn">Новая игра</button>
     </div>
-    <div id="world-map" class="hidden"></div>
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-gray-800 rounded-xl border-2 border-gray-700 p-6 max-w-sm w-full mx-4">
-            <h2 id="modal-title" class="text-2xl font-bold mb-4 glow-text"></h2>
-            <p id="modal-text" class="text-gray-300 mb-6"></p>
-            <div class="flex justify-end gap-3">
-                <button id="modal-reset" class="bg-purple-600 hover:bg-purple-500 border-2 border-purple-400 text-white px-4 py-2 rounded-lg font-bold transition-all" style="display: none;">
-                    <i data-feather="refresh-cw" class="inline mr-2"></i> НОВАЯ ИГРА
-                </button>
-                <button id="modal-attack" class="bg-red-600 hover:bg-red-500 border-2 border-red-400 text-white px-4 py-2 rounded-lg font-bold transition-all" style="display: none;">
-                    <i data-feather="zap" class="inline mr-2"></i> АТАКОВАТЬ
-                </button>
-                <button id="modal-close" class="bg-gray-600 hover:bg-gray-500 border-2 border-gray-400 text-white px-4 py-2 rounded-lg font-bold transition-all">
-                    <i data-feather="x" class="inline mr-2"></i> ЗАКРЫТЬ
-                </button>
-            </div>
+
+    <div id="settingsModal">
+        <div id="settingsContent">
+            <label>Имя для Игрока 1: <input id="nameInput1" value="Ball 1"></label>
+            <label>Имя для Игрока 2: <input id="nameInput2" value="Ball 2"></label>
+            <label>Изображение для Игрока 1: <input type="file" id="fileInput1" accept="image/*"></label>
+            <label>Изображение для Игрока 2: <input type="file" id="fileInput2" accept="image/*"></label>
+            <label>Размер шариков: <input type="range" id="sizeSlider" min="10" max="50" value="20"></label>
+            <label>Начальные жизни: <input type="number" id="hpInput" min="1" max="10" value="2"></label>
+            <button onclick="saveSettings()">Сохранить</button>
+            <button onclick="closeSettings()">Отмена</button>
         </div>
     </div>
+
+    <audio id="bounceSound" src="zvuk1.mp3"></audio>
+    <audio id="sawCollisionSound" src="zvuk2.mp3"></audio>
+
     <script>
-        const width = 1360;
-        const height = 600;
-        const pixelSize = 8; // Increased for better performance on mobile
-     
-        let countriesData = [];
-        let hoveredCountry = null;
-        let targetCountry = null;
-        let countryOwners = {};
-        let countryPixels = {};
-        let svg, g, pixelLayer, countryLayer;
-        let warInProgress = false;
-        let gameSpeed = 80; // Set to slower speed
-        const speeds = {slow: 80, medium: 40, fast: 15};
-        let currentSpeed = 'slow';
-        let idToGeoIndex = {};
-        let geoNeighbors = [];
-     
-        const projection = d3.geoNaturalEarth1()
-            .scale(width / 6.5)
-            .translate([width / 2, height / 2]);
-        const path = d3.geoPath().projection(projection);
-        function initMap() {
-            svg = d3.select("#world-map")
-                .append("svg")
-                .attr("viewBox", `0 0 ${width} ${height}`)
-                .attr("width", "100%")
-                .attr("height", "100%")
-                .attr("preserveAspectRatio", "xMidYMid meet");
-             
-            const zoom = d3.zoom()
-                .scaleExtent([1, 8])
-                .on('zoom', zoomed);
-             
-            svg.call(zoom);
-             
-            g = svg.append("g");
-             
-            g.append("path")
-                .datum({type: "Sphere"})
-                .attr("class", "ocean")
-                .attr("d", path);
-             
-            pixelLayer = g.append("g").attr("class", "pixel-layer");
-            countryLayer = g.append("g").attr("class", "country-layer");
-         
-            d3.json("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json").then(function(world) {
-                const originalGeometries = world.objects.countries.geometries;
-                geoNeighbors = topojson.neighbors(originalGeometries);
-                originalGeometries.forEach((geo, i) => {
-                    idToGeoIndex[geo.id] = i;
-                });
-             
-                const countries = topojson.feature(world, world.objects.countries);
-                countriesData = countries.features;
-             
-                // Sort countries alphabetically by name
-                countriesData.sort((a, b) => a.properties.name.localeCompare(b.properties.name));
-             
-                // Populate start country select
-                const select = document.getElementById('start-country');
-                countriesData.forEach(country => {
-                    const option = document.createElement('option');
-                    option.value = country.id;
-                    option.textContent = country.properties.name;
-                    select.appendChild(option);
-                });
-             
-                countriesData.forEach(country => {
-                    countryOwners[country.id] = 'neutral';
-                    countryPixels[country.id] = createPixelsForCountry(country);
-                });
-             
-                countryLayer.selectAll(".country")
-                    .data(countriesData)
-                    .enter()
-                    .append("path")
-                    .attr("class", "country")
-                    .attr("d", path)
-                    .attr("data-id", d => d.id)
-                    .classed("neutral", true)
-                    .on("click", handleCountryClick);
-                    // Removed mouseover and title for minimalism
-            });
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false, willReadFrequently: false });
+        const message = document.getElementById('message');
+        const hp1Span = document.getElementById('hp1');
+        const hp2Span = document.getElementById('hp2');
+        const name1Span = document.getElementById('name1');
+        const name2Span = document.getElementById('name2');
+        const newGameBtn = document.getElementById('newGameBtn');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const bounceSound = document.getElementById('bounceSound');
+        const sawCollisionSound = document.getElementById('sawCollisionSound');
+
+        let gameOver = false;
+        let winner = '';
+        let player1Name = 'Ball 1';
+        let player2Name = 'Ball 2';
+        let ballRadius = 20;
+        let initialHP = 2;
+        let ball1Img = new Image();
+        let ball2Img = new Image();
+
+        const ball1 = {
+            x: 80,
+            y: 200,
+            vx: 2,
+            vy: 1.5,
+            radius: ballRadius,
+            hp: initialHP,
+            maxHP: initialHP,
+            hasSaw: false,
+            sawAngle: 0,
+            sawIntensity: 0,
+            mass: 1
+        };
+
+        const ball2 = {
+            x: 320,
+            y: 200,
+            vx: -2,
+            vy: -1.5,
+            radius: ballRadius,
+            hp: initialHP,
+            maxHP: initialHP,
+            hasSaw: false,
+            sawAngle: 0,
+            sawIntensity: 0,
+            mass: 1
+        };
+
+        let saws = [];
+        let collisionCooldown = 0;
+        let lastSawTime = 0;
+        let bloodParticles = [];
+
+        class BloodParticle {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
+                this.life = 1;
+                this.size = Math.random() * 4 + 2;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.vy += 0.2;
+                this.life -= 0.02;
+            }
+
+            draw(ctx) {
+                ctx.fillStyle = `rgba(200, 0, 0, ${this.life * 0.8})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
         }
-        function zoomed(event) {
-            g.attr('transform', event.transform);
+
+        function createBlood(x, y, count = 8) {
+            for (let i = 0; i < count; i++) {
+                bloodParticles.push(new BloodParticle(x, y));
+            }
         }
-        function resetZoom() {
-            svg.transition().duration(750).call(
-                zoom.transform,
-                d3.zoomIdentity,
-                d3.zoomTransform(svg.node()).invert([width / 2, height / 2])
-            );
+
+        function createSaw() {
+            const now = Date.now();
+            if (now - lastSawTime > 3000 && Math.random() < 0.3 && saws.length < 1) {
+                saws.push({
+                    x: Math.random() * (canvas.width - 60) + 30,
+                    y: Math.random() * (canvas.height - 60) + 30,
+                    radius: 12,
+                    angle: 0,
+                    collected: false
+                });
+                lastSawTime = now;
+            }
         }
-        function createPixelsForCountry(country) {
-            const bounds = path.bounds(country);
-            const pixels = [];
-         
-            for (let x = Math.floor(bounds[0][0]); x < bounds[1][0]; x += pixelSize) {
-                for (let y = Math.floor(bounds[0][1]); y < bounds[1][1]; y += pixelSize) {
-                    const point = [x + pixelSize/2, y + pixelSize/2];
-                    const coords = projection.invert(point);
-                 
-                    if (coords && d3.geoContains(country, coords)) {
-                        pixels.push({
-                            x: x,
-                            y: y,
-                            owner: 'neutral',
-                            element: null
-                        });
-                    }
+
+        function drawSaw(saw) {
+            ctx.save();
+            ctx.translate(saw.x, saw.y);
+            ctx.rotate(saw.angle);
+            
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(0, 0, saw.radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.shadowColor = 'rgba(255, 200, 0, 0.8)';
+            ctx.shadowBlur = 15;
+            
+            ctx.strokeStyle = '#FF8C00';
+            ctx.lineWidth = 2;
+            
+            const teeth = 12;
+            for (let i = 0; i < teeth; i++) {
+                const a = (Math.PI * 2 * i) / teeth;
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.lineTo(Math.cos(a) * 18, Math.sin(a) * 18);
+                ctx.stroke();
+            }
+            
+            ctx.restore();
+        }
+
+        function drawGlow(x, y, radius, color) {
+            const gradient = ctx.createRadialGradient(x, y, radius, x, y, radius + 8);
+            gradient.addColorStop(0, color + '40');
+            gradient.addColorStop(1, color + '00');
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, radius + 8, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawSpikes(ball) {
+            ctx.save();
+            ctx.translate(ball.x, ball.y);
+            ctx.rotate(ball.sawAngle);
+            
+            const intensity = Math.min(ball.sawIntensity, 1);
+            const spikesCount = 12 + Math.floor(intensity * 8);
+            const spikeLength = 15 + intensity * 10;
+            const baseWidth = 0.2 + intensity * 0.1;
+            
+            for (let i = 0; i < spikesCount; i++) {
+                const angle = (Math.PI * 2 * i) / spikesCount;
+                const base1 = angle - baseWidth;
+                const base2 = angle + baseWidth;
+                
+                ctx.fillStyle = `hsl(0, 100%, ${20 + intensity * 30}%)`;
+                ctx.beginPath();
+                ctx.moveTo(Math.cos(base1) * ball.radius, Math.sin(base1) * ball.radius);
+                ctx.lineTo(Math.cos(base2) * ball.radius, Math.sin(base2) * ball.radius);
+                ctx.lineTo(Math.cos(angle) * (ball.radius + spikeLength), Math.sin(angle) * (ball.radius + spikeLength));
+                ctx.closePath();
+                ctx.fill();
+                
+                ctx.strokeStyle = `hsl(0, 100%, ${10 + intensity * 20}%)`;
+                ctx.lineWidth = 1.5 + intensity * 0.5;
+                ctx.stroke();
+                
+                if (intensity > 0.5) {
+                    ctx.fillStyle = `rgba(255, 0, 0, ${(intensity - 0.5) * 0.6})`;
+                    ctx.beginPath();
+                    ctx.arc(
+                        Math.cos(angle) * (ball.radius + spikeLength * 0.7),
+                        Math.sin(angle) * (ball.radius + spikeLength * 0.7),
+                        2 + intensity * 2,
+                        0,
+                        Math.PI * 2
+                    );
+                    ctx.fill();
                 }
             }
-         
-            pixels.forEach(pixel => {
-                const rect = pixelLayer.append("rect")
-                    .attr("class", "pixel")
-                    .attr("x", pixel.x)
-                    .attr("y", pixel.y)
-                    .attr("width", pixelSize)
-                    .attr("height", pixelSize)
-                    .attr("fill", "transparent")
-                    .attr("stroke", "none");
-                pixel.element = rect;
-            });
-         
-            return pixels;
+            
+            ctx.restore();
         }
-        function handleCountryHover(event, country) {
-            // Removed for minimalism
+
+        function drawBall(ball, color, img) {
+            ctx.save();
+            
+            if (ball.hasSaw) {
+                drawGlow(ball.x, ball.y, ball.radius, color);
+            }
+            
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.clip();
+            if (img.complete && img.naturalWidth > 0) {
+                ctx.drawImage(img, ball.x - ball.radius, ball.y - ball.radius, ball.radius * 2, ball.radius * 2);
+            } else {
+                ctx.fillStyle = color;
+                ctx.fill();
+            }
+            ctx.restore();
+
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.stroke();
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius - 3, 0, Math.PI * 2);
+            ctx.stroke();
+
+            if (ball.hasSaw) {
+                drawSpikes(ball);
+            }
         }
-        function handleCountryClick(event, d) {
-            if (warInProgress) return;
-         
-            const country = d;
-            countryLayer.selectAll(".country").classed('target', false);
-         
-            let title = country.properties.name;
-            let text = '';
-            let showAttack = false;
-            let showReset = false;
-         
-            if (countryOwners[country.id] === 'player') {
-                text = 'Это ваша территория.';
-            } else if (countryOwners[country.id] === 'neutral') {
-                const hasNeighbor = getPlayerCountries().some(pc => isNeighbor(pc, country));
-                if (hasNeighbor) {
-                    targetCountry = country;
-                    text = 'Хотите атаковать эту страну?';
-                    showAttack = true;
-                    // Removed adding 'target' class to avoid thick borders
+
+        function updateBall(ball) {
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+            let bounced = false;
+            if (ball.x - ball.radius < 0 || ball.x + ball.radius > canvas.width) {
+                ball.vx *= -1;
+                ball.x = Math.max(ball.radius, Math.min(canvas.width - ball.radius, ball.x));
+                bounced = true;
+            }
+            if (ball.y - ball.radius < 0 || ball.y + ball.radius > canvas.height) {
+                ball.vy *= -1;
+                ball.y = Math.max(ball.radius, Math.min(canvas.height - ball.radius, ball.y));
+                bounced = true;
+            }
+            if (bounced) {
+                bounceSound.play().catch(() => {});
+            }
+            if (ball.hasSaw) {
+                ball.sawAngle += 0.1;
+                ball.sawIntensity = Math.min(ball.sawIntensity + 0.05, 1);
+            } else {
+                ball.sawIntensity = Math.max(ball.sawIntensity - 0.03, 0);
+            }
+        }
+
+        function checkBallCollision() {
+            if (collisionCooldown > 0) {
+                collisionCooldown--;
+                return;
+            }
+            const dx = ball2.x - ball1.x;
+            const dy = ball2.y - ball1.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const minDistance = ball1.radius + ball2.radius;
+            if (distance < minDistance) {
+                collisionCooldown = 30;
+                const nx = dx / distance;
+                const ny = dy / distance;
+                const overlap = (minDistance - distance) / 2 + 3;
+                ball1.x -= overlap * nx;
+                ball1.y -= overlap * ny;
+                ball2.x += overlap * nx;
+                ball2.y += overlap * ny;
+                const v1n = ball1.vx * nx + ball1.vy * ny;
+                const v2n = ball2.vx * nx + ball2.vy * ny;
+                ball1.vx += (v2n - v1n) * nx;
+                ball1.vy += (v2n - v1n) * ny;
+                ball2.vx += (v1n - v2n) * nx;
+                ball2.vy += (v1n - v2n) * ny;
+                let sawCollision = false;
+                if (ball1.hasSaw) {
+                    ball2.hp--;
+                    createBlood(ball2.x, ball2.y, 15);
+                    ball1.hasSaw = false;
+                    ball1.sawIntensity = 0;
+                    hp2Span.textContent = ball2.hp;
+                    sawCollision = true;
+                }
+                if (ball2.hasSaw) {
+                    ball1.hp--;
+                    createBlood(ball1.x, ball1.y, 15);
+                    ball2.hasSaw = false;
+                    ball2.sawIntensity = 0;
+                    hp1Span.textContent = ball1.hp;
+                    sawCollision = true;
+                }
+                if (sawCollision) {
+                    sawCollisionSound.play().catch(() => {});
                 } else {
-                    text = 'Эта страна не граничит с вашими территориями. Атака невозможна.';
+                    bounceSound.play().catch(() => {});
                 }
             }
-         
-            showModal(title, text, showAttack, showReset);
         }
-        function attackCountryAction() {
-            // Removed, handled in modal
-        }
-        function cancelSelection() {
-            // Removed, handled in modal
-        }
-        function updateButtons() {
-            // Removed
-        }
-        function startWar(defender) {
-            warInProgress = true;
-         
-            countryLayer.select(`path[data-id="${defender.id}"]`).classed('neutral', false).classed('warring', true);
-            const defenderPixels = countryPixels[defender.id];
-            defenderPixels.forEach(p => {
-                p.element.attr('fill', '#1a2535');
-                p.owner = 'neutral';
-            });
-         
-            const playerCountries = getPlayerCountries();
-            const borderingPlayers = playerCountries.filter(pc => isNeighbor(pc, defender));
-         
-            let attackerBorder = [];
-            borderingPlayers.forEach(bp => {
-                attackerBorder.push(...countryPixels[bp.id]);
-            });
-         
-            let capturedCount = 0;
-            const totalPixels = defenderPixels.length;
-         
-            const warInterval = setInterval(() => {
-                const uncapturedPixels = defenderPixels.filter(p => p.owner === 'neutral');
-             
-                if (uncapturedPixels.length === 0) {
-                    clearInterval(warInterval);
-                    countryOwners[defender.id] = 'player';
-                    countryLayer.select(`path[data-id="${defender.id}"]`).classed('warring', false).classed('player', true);
-                    defenderPixels.forEach(p => {
-                        p.element.attr('fill', 'transparent');
-                    });
-                 
-                    if (targetCountry) {
-                        countryLayer.select(`path[data-id="${targetCountry.id}"]`).classed('target', false);
-                    }
-                    targetCountry = null;
-                    warInProgress = false;
-                    checkWinCondition();
-                    return;
+
+        function checkSawCollision(ball) {
+            for (let i = saws.length - 1; i >= 0; i--) {
+                const saw = saws[i];
+                const dx = saw.x - ball.x;
+                const dy = saw.y - ball.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < ball.radius + saw.radius) {
+                    ball.hasSaw = true;
+                    ball.sawIntensity = 0.3;
+                    saws.splice(i, 1);
                 }
-             
-                const pixelsToCapture = Math.min(3 + borderingPlayers.length, uncapturedPixels.length);
-             
-                for (let i = 0; i < pixelsToCapture; i++) {
-                    let targetPixel;
-                 
-                    const borderPixels = uncapturedPixels.filter(p => {
-                        return attackerBorder.some(ap => {
-                            const dist = Math.sqrt(Math.pow(ap.x - p.x, 2) + Math.pow(ap.y - p.y, 2));
-                            return dist < pixelSize * 3;
-                        });
-                    });
-                 
-                    if (borderPixels.length > 0) {
-                        targetPixel = borderPixels[Math.floor(Math.random() * borderPixels.length)];
-                    } else {
-                        targetPixel = uncapturedPixels[Math.floor(Math.random() * uncapturedPixels.length)];
-                    }
-                 
-                    targetPixel.owner = 'player';
-                    targetPixel.element
-                        .attr('fill', '#ff6b6b');
-                    // Removed conquered class for performance
-                 
-                    attackerBorder.push(targetPixel);
-                    capturedCount++;
-                }
-             
-                // Removed progress text
-             
-            }, gameSpeed);
-        }
-        function isNeighbor(country1, country2) {
-            const index1 = idToGeoIndex[country1.id];
-            const index2 = idToGeoIndex[country2.id];
-            return geoNeighbors[index1].includes(index2);
-        }
-        function getPlayerCountries() {
-            return countriesData.filter(c => countryOwners[c.id] === 'player');
-        }
-        function updateInfoText(text) {
-            // Removed
-        }
-        function checkWinCondition() {
-            const neutralCount = Object.values(countryOwners).filter(o => o === 'neutral').length;
-            if (neutralCount === 0) {
-                setTimeout(() => {
-                    showModal('🏆 ПОЛНАЯ ПОБЕДА!', 'Вы захватили все территории мира!', false, true);
-                 
-                    // Confetti celebration
-                    const confettiSettings = { target: 'world-map', max: 200, size: 2, animate: true };
-                    const confetti = new ConfettiGenerator(confettiSettings);
-                    confetti.render();
-                 
-                    setTimeout(() => confetti.clear(), 5000);
-                }, 500);
             }
         }
-        function toggleSpeed() {
-            // Removed
-        }
-        function resetGame() {
-            if (warInProgress) return;
-         
-            Object.keys(countryOwners).forEach(id => {
-                countryOwners[id] = 'neutral';
-                const pixels = countryPixels[id];
-                pixels.forEach(pixel => {
-                    pixel.owner = 'neutral';
-                    pixel.element.attr('fill', 'transparent');
+
+        function gameLoop() {
+            ctx.fillStyle = '#f8f9fa';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            if (!gameOver) {
+                createSaw();
+                updateBall(ball1);
+                updateBall(ball2);
+                checkSawCollision(ball1);
+                checkSawCollision(ball2);
+                checkBallCollision();
+                saws.forEach(saw => {
+                    saw.angle += 0.05;
                 });
-                countryLayer.select(`path[data-id="${id}"]`)
-                    .classed('player', false)
-                    .classed('warring', false)
-                    .classed('neutral', true)
-                    .classed('target', false);
-            });
-         
-            targetCountry = null;
-            hoveredCountry = null;
-         
-            // Show start menu again
-            document.getElementById('start-menu').style.display = 'flex';
-            document.getElementById('world-map').classList.add('hidden');
-            document.getElementById('world-map').style.position = '';
-            document.getElementById('world-map').style.inset = '';
-        }
-        function showModal(title, text, showAttack = false, showReset = false) {
-            document.getElementById('modal-title').textContent = title;
-            document.getElementById('modal-text').textContent = text;
-            document.getElementById('modal-attack').style.display = showAttack ? 'inline-flex' : 'none';
-            document.getElementById('modal-reset').style.display = showReset ? 'inline-flex' : 'none';
-            document.getElementById('modal').style.display = 'flex';
-        }
-        function hideModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            initMap();
-            feather.replace();
-         
-            // Load confetti script if needed
-            if (!window.ConfettiGenerator) {
-                const script = document.createElement('script');
-                script.src = 'https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js';
-                document.head.appendChild(script);
-            }
-         
-            const modalAttack = document.getElementById('modal-attack');
-            const modalClose = document.getElementById('modal-close');
-            const modalReset = document.getElementById('modal-reset');
-         
-            modalAttack.addEventListener('click', () => {
-                if (targetCountry) {
-                    startWar(targetCountry);
-                    targetCountry = null;
+                if (ball1.hp <= 0) {
+                    gameOver = true;
+                    winner = `🟢 ${player2Name} wins! 🎉`;
+                } else if (ball2.hp <= 0) {
+                    gameOver = true;
+                    winner = `🔴 ${player1Name} wins! 🎉`;
                 }
-                hideModal();
+            }
+            
+            bloodParticles.forEach((particle, index) => {
+                particle.update();
+                particle.draw(ctx);
+                if (particle.life <= 0) {
+                    bloodParticles.splice(index, 1);
+                }
             });
-         
-            modalClose.addEventListener('click', hideModal);
-         
-            modalReset.addEventListener('click', () => {
-                resetGame();
-                hideModal();
-            });
-         
-            // Start button handler
-            document.getElementById('start-btn').addEventListener('click', function() {
-                const startId = document.getElementById('start-country').value;
-                if (!startId) return;
-             
-                const startCountry = countriesData.find(c => c.id === startId);
-                countryOwners[startId] = 'player';
-                countryLayer.select(`path[data-id="${startId}"]`).classed('neutral', false).classed('player', true);
-             
-                document.getElementById('start-menu').style.display = 'none';
-                document.getElementById('world-map').classList.remove('hidden');
-                document.getElementById('world-map').style.position = 'fixed';
-                document.getElementById('world-map').style.inset = '0';
-             
-                showModal('Добро пожаловать!', `Вы начали с ${startCountry.properties.name}. Кликните на страну для просмотра или атаки.`, false, false);
-            });
-        });
+            
+            saws.forEach(drawSaw);
+            drawBall(ball1, '#ff6b6b', ball1Img);
+            drawBall(ball2, '#4CAF50', ball2Img);
+            if (gameOver) {
+                message.textContent = winner;
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        function resetGame() {
+            ball1.x = canvas.width * 0.2;
+            ball1.y = canvas.height / 2;
+            ball1.vx = 2;
+            ball1.vy = 1.5;
+            ball1.hp = initialHP;
+            ball1.maxHP = initialHP;
+            ball1.hasSaw = false;
+            ball1.sawAngle = 0;
+            ball1.sawIntensity = 0;
+            ball2.x = canvas.width * 0.8;
+            ball2.y = canvas.height / 2;
+            ball2.vx = -2;
+            ball2.vy = -1.5;
+            ball2.hp = initialHP;
+            ball2.maxHP = initialHP;
+            ball2.hasSaw = false;
+            ball2.sawAngle = 0;
+            ball2.sawIntensity = 0;
+            saws = [];
+            bloodParticles = [];
+            gameOver = false;
+            winner = '';
+            collisionCooldown = 0;
+            lastSawTime = 0;
+            hp1Span.textContent = ball1.hp;
+            hp2Span.textContent = ball2.hp;
+            message.textContent = '';
+        }
+
+        function openSettings() {
+            settingsModal.style.display = 'flex';
+            document.getElementById('nameInput1').value = player1Name;
+            document.getElementById('nameInput2').value = player2Name;
+            document.getElementById('sizeSlider').value = ballRadius;
+            document.getElementById('hpInput').value = initialHP;
+        }
+
+        function closeSettings() {
+            settingsModal.style.display = 'none';
+        }
+
+        function saveSettings() {
+            player1Name = document.getElementById('nameInput1').value || 'Ball 1';
+            player2Name = document.getElementById('nameInput2').value || 'Ball 2';
+            name1Span.textContent = player1Name;
+            name2Span.textContent = player2Name;
+            ballRadius = parseInt(document.getElementById('sizeSlider').value);
+            ball1.radius = ballRadius;
+            ball2.radius = ballRadius;
+            initialHP = parseInt(document.getElementById('hpInput').value) || 2;
+            ball1.maxHP = initialHP;
+            ball2.maxHP = initialHP;
+            const file1 = document.getElementById('fileInput1').files[0];
+            if (file1) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    ball1Img.src = e.target.result;
+                };
+                reader.readAsDataURL(file1);
+            }
+            const file2 = document.getElementById('fileInput2').files[0];
+            if (file2) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    ball2Img.src = e.target.result;
+                };
+                reader.readAsDataURL(file2);
+            }
+            closeSettings();
+            resetGame();
+        }
+
+        function resizeCanvas() {
+            const size = Math.min(window.innerWidth - 20, window.innerHeight - 150, 400);
+            canvas.width = size;
+            canvas.height = size;
+            ball1.x = size * 0.2;
+            ball2.x = size * 0.8;
+            ball1.y = size / 2;
+            ball2.y = size / 2;
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        newGameBtn.onclick = resetGame;
+        settingsBtn.onclick = openSettings;
+        gameLoop();
     </script>
 </body>
 </html>
